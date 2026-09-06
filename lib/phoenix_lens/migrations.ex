@@ -69,6 +69,7 @@ defmodule PhoenixLens.Migrations do
     )
 
     Ecto.Migration.execute(PhoenixLens.Settings.settings_sql())
+    Ecto.Migration.execute(PhoenixLens.Settings.settings_alter_sql())
     Ecto.Migration.execute(PhoenixLens.Settings.sources_sql())
 
     :ok

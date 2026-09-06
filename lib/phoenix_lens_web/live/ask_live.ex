@@ -315,7 +315,6 @@ defmodule PhoenixLensWeb.AskLive do
                     </option>
                   </select>
                 </label>
-                <button type="submit">Run</button>
               </div>
               <SqlEditor.editor
                 :if={@editor_open}

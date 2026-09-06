@@ -32,6 +32,27 @@ defmodule PhoenixLensWeb.SettingsLive do
     end
   end
 
+  def handle_event("set_retention", %{"days" => days}, socket) do
+    parsed = Settings.parse_retention(days)
+
+    cond do
+      parsed == socket.assigns.retention_days ->
+        {:noreply, socket}
+
+      true ->
+        case Settings.put_audit_retention_days(days) do
+          {:ok, _} ->
+            {:noreply,
+             socket
+             |> put_flash(:info, "Audit retention updated")
+             |> refresh()}
+
+          {:error, error} ->
+            {:noreply, put_flash(socket, :error, error.message)}
+        end
+    end
+  end
+
   def handle_event("reconnect", _params, socket) do
     _ = DuckDB.Server.reload()
 
@@ -170,6 +191,29 @@ defmodule PhoenixLensWeb.SettingsLive do
           <% end %>
         </p>
         <p :if={@status.error} class="lens-error-inline">{@status.error}</p>
+      </section>
+
+      <section class="lens-dash-card">
+        <header class="lens-card-head">
+          <h2>Audit log</h2>
+        </header>
+        <p class="lens-muted">
+          Query history is stored without result cells. Rows older than this window are deleted.
+        </p>
+        <form phx-change="set_retention" class="lens-retention">
+          <label>
+            Keep logs for
+            <select name="days" class="lens-field">
+              <option
+                :for={days <- Settings.retention_choices()}
+                value={days}
+                selected={days == @retention_days}
+              >
+                {retention_label(days)}
+              </option>
+            </select>
+          </label>
+        </form>
       </section>
 
       <section class="lens-dash-card">
@@ -332,7 +376,11 @@ defmodule PhoenixLensWeb.SettingsLive do
     |> assign(:attached, status.attached)
     |> assign(:host_sources, Enum.filter(status.attached, & &1.builtin?))
     |> assign(:user_sources, sources)
+    |> assign(:retention_days, Settings.audit_retention_days())
   end
+
+  defp retention_label(0), do: "Forever"
+  defp retention_label(days), do: "#{days} days"
 
   defp engine_card_class(current, engine) do
     if current == engine, do: "lens-engine-card is-active", else: "lens-engine-card"

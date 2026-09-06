@@ -23,6 +23,12 @@ defmodule PhoenixLensWeb.Components.SqlEditor do
         autocomplete="off"
         autocapitalize="off"
       >{@value}</textarea>
+      <div class="lens-sql-foot">
+        <span class="lens-kbd-hint">Ctrl+Enter</span>
+        <button type="button" class="lens-sql-run" data-sql-run>
+          Run
+        </button>
+      </div>
     </div>
     """
   end

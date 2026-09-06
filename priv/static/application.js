@@ -99,6 +99,14 @@
       el.addEventListener("blur", function () {
         setTimeout(function () { self.hide(); }, 120);
       });
+      var run = el.parentNode.querySelector("[data-sql-run]");
+      if (run) {
+        run.addEventListener("click", function (e) {
+          e.preventDefault();
+          self.hide();
+          self.pushEvent("run", { sql: el.value });
+        });
+      }
     },
     destroyed: function () {
       if (this.menu && this.menu.parentNode) this.menu.parentNode.removeChild(this.menu);
@@ -141,6 +149,13 @@
       if (this.menu) this.menu.hidden = true;
     },
     onKey: function (e) {
+      if ((e.key === "Enter" || e.key === "NumpadEnter") && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.hide();
+        this.pushEvent("run", { sql: this.el.value });
+        return;
+      }
       if (this.menu.hidden || !this.items.length) return;
       if (e.key === "ArrowDown") {
         e.preventDefault();

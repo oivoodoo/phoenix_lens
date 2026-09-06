@@ -53,4 +53,16 @@ defmodule PhoenixLens.SettingsTest do
   test "engine defaults to postgresql" do
     assert Settings.engine() in [:postgresql, :duckdb]
   end
+
+  test "parse_retention accepts presets and forever" do
+    assert Settings.parse_retention(90) == 90
+    assert Settings.parse_retention("30") == 30
+    assert Settings.parse_retention(0) == 0
+    assert Settings.parse_retention(12) == nil
+    assert Settings.parse_retention("nope") == nil
+  end
+
+  test "audit_retention_days defaults to 90" do
+    assert Settings.audit_retention_days() == 90
+  end
 end

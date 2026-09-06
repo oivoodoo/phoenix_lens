@@ -56,10 +56,11 @@ defmodule PhoenixLensWeb.QuestionLive do
   end
 
   @impl true
-  def handle_event("run", _params, socket) do
-    q = Map.put(socket.assigns.question, "sql", socket.assigns.sql)
+  def handle_event("run", params, socket) do
+    sql = params["sql"] || socket.assigns.sql
+    q = Map.put(socket.assigns.question, "sql", sql)
     {result, error} = run(q, socket)
-    {:noreply, socket |> assign(:result, result) |> assign(:error, error)}
+    {:noreply, socket |> assign(:sql, sql) |> assign(:result, result) |> assign(:error, error)}
   end
 
   def handle_event("save", params, socket) do
@@ -154,23 +155,40 @@ defmodule PhoenixLensWeb.QuestionLive do
           type="text"
           name="name"
           value={@name}
+          autocomplete="off"
         />
-        <div class="lens-question-actions">
-          <button type="button" class="ghost" phx-click="toggle-editor">
-            {if @editor_open, do: "Hide editor", else: "Show editor"}
-          </button>
-          <a class="ghost btn-link" href={"#{@lens_prefix}/questions/#{@question["id"]}/csv"}>CSV</a>
-          <button type="button" class="ghost" phx-click="delete" data-confirm="Delete this question?">
-            Delete
-          </button>
-          <button type="submit" form="q-form">Save</button>
+        <div class="lens-question-toolbar">
+          <div class="lens-toolbar-group">
+            <button
+              type="button"
+              class={if(@editor_open, do: "ghost is-on", else: "ghost")}
+              phx-click="toggle-editor"
+              aria-pressed={@editor_open}
+            >
+              Editor
+            </button>
+            <a
+              class="ghost btn-link"
+              href={"#{@lens_prefix}/questions/#{@question["id"]}/csv"}
+            >
+              Export
+            </a>
+          </div>
+          <div class="lens-toolbar-group">
+            <button
+              type="button"
+              class="ghost"
+              phx-click="delete"
+              data-confirm="Delete this question?"
+            >
+              Delete
+            </button>
+            <button type="submit" form="q-form">Save</button>
+          </div>
         </div>
       </header>
 
       <form id="q-form" phx-submit="save" phx-change="change" class="lens-ask">
-        <div class="lens-filter-row">
-          <button type="button" class="ghost" phx-click="run">Refresh</button>
-        </div>
         <SqlEditor.editor
           :if={@editor_open}
           id={"lens-sql-q-#{@question["id"]}"}

@@ -12,9 +12,13 @@ defmodule PhoenixLens.Settings do
     duckdb default primary catalog sys
   )
   @engine_key {__MODULE__, :engine}
+  @default_retention_days 90
+  @retention_choices [7, 30, 90, 180, 365, 0]
 
   def engines, do: @engines
   def kinds, do: @kinds
+  def retention_choices, do: @retention_choices
+  def default_retention_days, do: @default_retention_days
 
   def engine do
     engine = persisted_engine() || app_engine() || :postgresql
@@ -65,6 +69,68 @@ defmodule PhoenixLens.Settings do
   rescue
     e -> {:error, Error.from_exception(e)}
   end
+
+  def audit_retention_days do
+    ensure_tables()
+
+    case query_maps("SELECT audit_retention_days FROM phoenix_lens_settings WHERE id = 1") do
+      [%{"audit_retention_days" => days}] when is_integer(days) and days >= 0 ->
+        days
+
+      _ ->
+        app_retention() || @default_retention_days
+    end
+  rescue
+    _ -> app_retention() || @default_retention_days
+  end
+
+  def put_audit_retention_days(days) do
+    days = parse_retention(days)
+
+    cond do
+      is_nil(days) ->
+        {:error,
+         %Error{
+           message: "retention must be 7, 30, 90, 180, 365 days, or 0 to keep forever",
+           kind: :config
+         }}
+
+      true ->
+        ensure_tables()
+        repo = metadata_repo()
+
+        if is_nil(repo) do
+          {:error, %Error{message: "PhoenixLens metadata repo is not configured", kind: :config}}
+        else
+          repo.query!(
+            """
+            INSERT INTO phoenix_lens_settings (id, engine, audit_retention_days, updated_at)
+            VALUES (1, 'postgresql', $1, NOW())
+            ON CONFLICT (id) DO UPDATE
+              SET audit_retention_days = EXCLUDED.audit_retention_days, updated_at = NOW()
+            """,
+            [days],
+            log: false
+          )
+
+          _ = PhoenixLens.Audit.purge_expired()
+          {:ok, days}
+        end
+    end
+  rescue
+    e -> {:error, Error.from_exception(e)}
+  end
+
+  def parse_retention(days) when is_integer(days) and days in @retention_choices, do: days
+
+  def parse_retention(days) when is_binary(days) do
+    case Integer.parse(String.trim(days)) do
+      {n, ""} -> parse_retention(n)
+      _ -> nil
+    end
+  end
+
+  def parse_retention(_), do: nil
 
   def sources do
     ensure_tables()
@@ -208,6 +274,7 @@ defmodule PhoenixLens.Settings do
 
       repo ->
         repo.query!(settings_sql(), [], log: false)
+        repo.query!(settings_alter_sql(), [], log: false)
         repo.query!(sources_sql(), [], log: false)
         :ok
     end
@@ -220,8 +287,16 @@ defmodule PhoenixLens.Settings do
     CREATE TABLE IF NOT EXISTS phoenix_lens_settings (
       id int PRIMARY KEY DEFAULT 1 CHECK (id = 1),
       engine text NOT NULL DEFAULT 'postgresql',
+      audit_retention_days int NOT NULL DEFAULT 90,
       updated_at timestamp(6) NOT NULL DEFAULT now()
     )
+    """
+  end
+
+  def settings_alter_sql do
+    """
+    ALTER TABLE phoenix_lens_settings
+      ADD COLUMN IF NOT EXISTS audit_retention_days int NOT NULL DEFAULT 90
     """
   end
 
@@ -249,6 +324,14 @@ defmodule PhoenixLens.Settings do
     end
   rescue
     _ -> nil
+  end
+
+  defp app_retention do
+    case Application.get_env(:phoenix_lens, :audit_retention_days) do
+      days when is_integer(days) and days >= 0 -> days
+      days when is_binary(days) -> parse_retention(days)
+      _ -> nil
+    end
   end
 
   defp app_engine do
