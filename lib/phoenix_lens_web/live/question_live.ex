@@ -51,6 +51,11 @@ defmodule PhoenixLensWeb.QuestionLive do
   end
 
   @impl true
+  def handle_info({:preview_viz, viz}, socket) do
+    {:noreply, assign(socket, :viz, viz)}
+  end
+
+  @impl true
   def handle_event("run", _params, socket) do
     q = Map.put(socket.assigns.question, "sql", socket.assigns.sql)
     {result, error} = run(q, socket)
@@ -164,17 +169,6 @@ defmodule PhoenixLensWeb.QuestionLive do
 
       <form id="q-form" phx-submit="save" phx-change="change" class="lens-ask">
         <div class="lens-filter-row">
-          <label class="lens-chip">
-            Visualization
-            <select name="viz">
-              <option value="table" selected={@viz == "table"}>Table</option>
-              <option value="number" selected={@viz == "number"}>Number</option>
-              <option value="bar" selected={@viz == "bar"}>Bar</option>
-              <option value="line" selected={@viz == "line"}>Line</option>
-              <option value="pie" selected={@viz == "pie"}>Pie</option>
-              <option value="combo" selected={@viz == "combo"}>Combo</option>
-            </select>
-          </label>
           <button type="button" class="ghost" phx-click="run">Refresh</button>
         </div>
         <SqlEditor.editor
@@ -201,7 +195,12 @@ defmodule PhoenixLensWeb.QuestionLive do
 
       <section class="lens-viz-card">
         <%= if @result do %>
-          <ResultTable.visualization result={@result} viz={@viz} />
+          <.live_component
+            module={PhoenixLensWeb.ResultPreview}
+            id={"q-preview-#{@question["id"]}"}
+            result={@result}
+            viz={@viz}
+          />
         <% end %>
       </section>
     </div>

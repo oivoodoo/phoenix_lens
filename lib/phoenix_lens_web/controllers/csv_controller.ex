@@ -1,7 +1,7 @@
 defmodule PhoenixLensWeb.CSVController do
   use PhoenixLensWeb, :controller
 
-  alias PhoenixLens.{Questions, Query, Result}
+  alias PhoenixLens.{Export, Questions, Query}
 
   def show(conn, %{"id" => id}) do
     actor = conn.assigns[:lens_actor]
@@ -14,7 +14,7 @@ defmodule PhoenixLensWeb.CSVController do
                question_id: question["id"]
              ) do
           {:ok, result} ->
-            body = to_csv(result)
+            body = Export.csv(result)
 
             conn
             |> put_resp_content_type("text/csv")
@@ -30,27 +30,6 @@ defmodule PhoenixLensWeb.CSVController do
 
       {:error, error} ->
         send_resp(conn, 404, error.message)
-    end
-  end
-
-  defp to_csv(result) do
-    header = Enum.map_join(result.columns, ",", &escape/1)
-
-    rows =
-      Enum.map_join(result.rows, "\n", fn row ->
-        Enum.map_join(row, ",", fn cell -> escape(Result.display_cell(cell)) end)
-      end)
-
-    header <> "\n" <> rows <> "\n"
-  end
-
-  defp escape(value) do
-    value = to_string(value)
-
-    if String.contains?(value, [",", "\"", "\n"]) do
-      "\"" <> String.replace(value, "\"", "\"\"") <> "\""
-    else
-      value
     end
   end
 end

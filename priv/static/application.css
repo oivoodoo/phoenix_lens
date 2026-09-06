@@ -473,6 +473,43 @@ button.tiny { padding: 2px 8px; }
   place-items: center;
 }
 
+.lens-preview-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.lens-viz-picker { display: flex; flex-wrap: wrap; gap: 4px; }
+.lens-viz-picker button {
+  background: #fff;
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-weight: 700;
+}
+.lens-viz-picker button:hover { background: var(--bg); color: var(--text-dark); }
+.lens-viz-picker button.active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+.lens-preview-actions { display: flex; gap: 8px; }
+.lens-axis-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+.lens-pager {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.lens-pager-btns { display: flex; gap: 6px; }
+.lens-pager button:disabled { opacity: 0.45; cursor: default; }
+
 .lens-kpi { font-size: 42px; font-weight: 900; letter-spacing: -0.03em; color: var(--text-dark); }
 .lens-kpi-block { padding: 8px 0 16px; }
 

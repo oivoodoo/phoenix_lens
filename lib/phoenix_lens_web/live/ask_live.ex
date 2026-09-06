@@ -75,6 +75,11 @@ defmodule PhoenixLensWeb.AskLive do
   end
 
   @impl true
+  def handle_info({:preview_viz, viz}, socket) do
+    {:noreply, assign(socket, :viz, viz)}
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="lens-question">
@@ -110,17 +115,6 @@ defmodule PhoenixLensWeb.AskLive do
               </option>
             </select>
           </label>
-          <label class="lens-chip">
-            Visualization
-            <select name="viz">
-              <option value="table" selected={@viz == "table"}>Table</option>
-              <option value="number" selected={@viz == "number"}>Number</option>
-              <option value="bar" selected={@viz == "bar"}>Bar</option>
-              <option value="line" selected={@viz == "line"}>Line</option>
-              <option value="pie" selected={@viz == "pie"}>Pie</option>
-              <option value="combo" selected={@viz == "combo"}>Combo</option>
-            </select>
-          </label>
         </div>
 
         <SqlEditor.editor :if={@editor_open} id="lens-sql-ask" name="sql" value={@sql} catalog={@ac} />
@@ -132,7 +126,12 @@ defmodule PhoenixLensWeb.AskLive do
 
       <section class="lens-viz-card">
         <%= if @result do %>
-          <ResultTable.visualization result={@result} viz={@viz} />
+          <.live_component
+            module={PhoenixLensWeb.ResultPreview}
+            id="ask-preview"
+            result={@result}
+            viz={@viz}
+          />
         <% else %>
           <p class="lens-empty">
             Write SQL and hit Refresh. Protected fields are masked in every output.

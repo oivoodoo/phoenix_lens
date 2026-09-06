@@ -2,15 +2,24 @@ defmodule PhoenixLensWeb.Components.ResultTable do
   @moduledoc false
   use Phoenix.Component
 
-  alias PhoenixLens.Result
+  alias PhoenixLens.{Result, Viz}
 
   @palette ["#509EE3", "#88BF4D", "#A989C5", "#F9D45C", "#EF8C8C", "#F2A86F", "#98D9D9"]
 
   attr :result, :map, required: true
+  attr :page_info, :map, default: nil
 
   def result_table(%{result: nil} = assigns), do: ~H""
 
   def result_table(assigns) do
+    rows =
+      case assigns[:page_info] do
+        %{rows: rows} -> rows
+        _ -> assigns.result.rows
+      end
+
+    assigns = assign(assigns, :rows, rows)
+
     ~H"""
     <div class="lens-table-wrap">
       <table class="lens-table">
@@ -20,7 +29,7 @@ defmodule PhoenixLensWeb.Components.ResultTable do
           </tr>
         </thead>
         <tbody>
-          <tr :for={row <- @result.rows}>
+          <tr :for={row <- @rows}>
             <td
               :for={{col, value} <- Enum.zip(@result.columns, row)}
               class={masked_class(@result, col)}
@@ -31,10 +40,9 @@ defmodule PhoenixLensWeb.Components.ResultTable do
         </tbody>
       </table>
       <p class="lens-muted">
-        Showing {min(@result.num_rows, length(@result.rows))}
-        {if @result.num_rows == 1, do: "row", else: "rows"} · {@result.duration_ms} ms
+        {@result.duration_ms} ms
         <%= if @result.truncated do %>
-          · truncated
+          · truncated at query cap
         <% end %>
         <%= if @result.masked_columns != [] do %>
           · masked: {Enum.join(@result.masked_columns, ", ")}
@@ -46,30 +54,39 @@ defmodule PhoenixLensWeb.Components.ResultTable do
 
   attr :result, :map, required: true
   attr :viz, :string, default: "table"
+  attr :x, :string, default: nil
+  attr :y, :string, default: nil
+  attr :page_info, :map, default: nil
 
   def visualization(assigns) do
+    x = assigns[:x] || Viz.default_x(assigns.result)
+    y = assigns[:y] || Viz.default_y(assigns.result)
+    pairs = Viz.series(assigns.result, x, y)
+    assigns = assign(assigns, pairs: pairs, x: x, y: y)
+
     ~H"""
     <%= case @viz do %>
       <% "number" -> %>
-        <.kpi result={@result} />
+        <.kpi result={@result} pairs={@pairs} />
       <% "bar" -> %>
-        <.column_chart result={@result} />
+        <.column_chart result={@result} pairs={@pairs} />
       <% "line" -> %>
-        <.column_chart result={@result} line={true} />
+        <.column_chart result={@result} pairs={@pairs} line={true} />
       <% "combo" -> %>
-        <.column_chart result={@result} line={true} />
+        <.column_chart result={@result} pairs={@pairs} line={true} />
       <% "pie" -> %>
-        <.pie result={@result} />
+        <.pie result={@result} pairs={@pairs} />
       <% _ -> %>
-        <.result_table result={@result} />
+        <.result_table result={@result} page_info={@page_info} />
     <% end %>
     """
   end
 
   attr :result, :map, required: true
+  attr :pairs, :list, default: []
 
   def kpi(assigns) do
-    {value, hint} = kpi_bits(assigns.result)
+    {value, hint} = kpi_bits(assigns.result, assigns[:pairs] || [])
     assigns = assign(assigns, value: value, hint: hint)
 
     ~H"""
@@ -81,10 +98,11 @@ defmodule PhoenixLensWeb.Components.ResultTable do
   end
 
   attr :result, :map, required: true
+  attr :pairs, :list, default: []
   attr :line, :boolean, default: false
 
   def column_chart(assigns) do
-    pairs = chart_pairs(assigns.result)
+    pairs = assigns[:pairs] || []
     max_v = pairs |> Enum.map(&elem(&1, 1)) |> Enum.max(fn -> 1 end) |> max(1)
     w = 640
     h = 220
@@ -117,7 +135,7 @@ defmodule PhoenixLensWeb.Components.ResultTable do
 
     ~H"""
     <%= if @pairs == [] do %>
-      <.result_table result={@result} />
+      <p class="lens-empty">This chart needs a category on X and a number (or Count of rows) on Y.</p>
     <% else %>
       <svg class="lens-chart" viewBox={"0 0 #{@w} #{@h}"} role="img">
         <%= for {{label, value}, i} <- Enum.with_index(@pairs) do %>
@@ -145,16 +163,17 @@ defmodule PhoenixLensWeb.Components.ResultTable do
   end
 
   attr :result, :map, required: true
+  attr :pairs, :list, default: []
 
   def pie(assigns) do
-    pairs = chart_pairs(assigns.result)
+    pairs = assigns[:pairs] || []
     total = pairs |> Enum.map(&elem(&1, 1)) |> Enum.sum() |> max(1)
     slices = pie_slices(pairs, total)
     assigns = assign(assigns, pairs: pairs, total: total, slices: slices)
 
     ~H"""
     <%= if @pairs == [] do %>
-      <.result_table result={@result} />
+      <p class="lens-empty">This chart needs a category on X and a number (or Count of rows) on Y.</p>
     <% else %>
       <div class="lens-pie-wrap">
         <svg class="lens-pie" viewBox="0 0 180 180" role="img">
@@ -207,45 +226,24 @@ defmodule PhoenixLensWeb.Components.ResultTable do
     "M #{x0} #{y0} A #{r_out} #{r_out} 0 #{large} 1 #{x1} #{y1} L #{x2} #{y2} A #{r_in} #{r_in} 0 #{large} 0 #{x3} #{y3} Z"
   end
 
-  defp kpi_bits(%{rows: [[v | _] | rest]} = result) do
+  defp kpi_bits(_result, [{_label, value} | _]) do
+    {format_num(value), nil}
+  end
+
+  defp kpi_bits(%{rows: [[v | _] | _]} = result, _) do
     hint =
-      cond do
-        result.masked_columns != [] ->
-          "Masked: #{Enum.join(result.masked_columns, ", ")}"
-
-        match?([[_prev | _] | _], rest) ->
-          "First of #{result.num_rows} rows"
-
-        true ->
-          nil
+      if result.masked_columns != [] do
+        "Masked: #{Enum.join(result.masked_columns, ", ")}"
       end
 
     {Result.display_cell(v), hint}
   end
 
-  defp kpi_bits(_), do: {"—", nil}
+  defp kpi_bits(_, _), do: {"—", nil}
 
   defp masked_class(result, col) do
     if col in result.masked_columns, do: "masked", else: ""
   end
-
-  defp chart_pairs(%{columns: cols, rows: rows}) when length(cols) >= 2 do
-    rows
-    |> Enum.take(16)
-    |> Enum.map(fn row ->
-      label = Result.display_cell(Enum.at(row, 0))
-      num = to_number(Enum.at(row, -1)) || to_number(Enum.at(row, 1))
-      {label, num}
-    end)
-    |> Enum.reject(fn {_l, n} -> is_nil(n) end)
-  end
-
-  defp chart_pairs(_), do: []
-
-  defp to_number(n) when is_number(n), do: n * 1.0
-  defp to_number(%Decimal{} = d), do: Decimal.to_float(d)
-  defp to_number(:redacted), do: nil
-  defp to_number(_), do: nil
 
   defp short(label) when is_binary(label) and byte_size(label) > 10,
     do: String.slice(label, 0, 9) <> "…"

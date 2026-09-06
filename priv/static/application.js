@@ -171,11 +171,27 @@
     }
   };
 
+  var ResultDownload = {
+    mounted: function () {
+      this.handleEvent("lens-download", function (payload) {
+        var blob = new Blob([payload.body], { type: payload.mime || "text/plain" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = payload.filename || "lens-results";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      });
+    }
+  };
+
   var csrf = document.querySelector("meta[name='csrf-token']");
   var token = csrf ? csrf.getAttribute("content") : "";
   var liveSocket = new LiveView.LiveSocket("/live", Phoenix.Socket, {
     params: { _csrf_token: token },
-    hooks: { SqlEditor: SqlEditor }
+    hooks: { SqlEditor: SqlEditor, ResultDownload: ResultDownload }
   });
   liveSocket.connect();
   window.liveSocket = liveSocket;
