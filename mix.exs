@@ -42,6 +42,7 @@ defmodule PhoenixLens.MixProject do
       {:postgrex, "~> 0.17"},
       {:ecto_sql, "~> 3.11"},
       {:bandit, "~> 1.5"},
+      {:duckdbex, "~> 0.4", optional: true},
       {:plug_cowboy, "~> 2.6", only: :test},
       {:ex_doc, "~> 0.34", only: :dev, runtime: false}
     ]

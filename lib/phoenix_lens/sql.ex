@@ -4,6 +4,7 @@ defmodule PhoenixLens.SQL do
   @forbidden ~w(
     insert update delete merge drop alter create grant revoke truncate
     copy call do listen notify vacuum reindex cluster lock
+    attach detach install load export import pragma checkpoint
   )
 
   @doc """

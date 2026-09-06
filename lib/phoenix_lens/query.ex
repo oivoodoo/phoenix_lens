@@ -1,7 +1,7 @@
 defmodule PhoenixLens.Query do
   @moduledoc false
 
-  alias PhoenixLens.{Audit, Config, Error, Policy, Result, SQL}
+  alias PhoenixLens.{Audit, Config, DuckDB, Error, Policy, Result, Settings, SQL}
 
   def run(sql, opts \\ []) do
     started = System.monotonic_time(:millisecond)
@@ -48,15 +48,29 @@ defmodule PhoenixLens.Query do
     timeout = config.timeout_ms
     max_rows = config.max_rows
 
-    cond do
-      repo = db[:repo] ->
-        execute_repo(repo, sql, timeout, max_rows)
+    if Settings.engine() == :duckdb do
+      execute_duckdb(sql, timeout, max_rows)
+    else
+      cond do
+        repo = db[:repo] ->
+          execute_repo(repo, sql, timeout, max_rows)
 
-      db[:url] ->
-        execute_postgrex(Config.connection_name(db[:id]), sql, timeout, max_rows)
+        db[:url] ->
+          execute_postgrex(Config.connection_name(db[:id]), sql, timeout, max_rows)
 
-      true ->
-        throw(%Error{message: "database has neither repo nor url", kind: :config})
+        true ->
+          throw(%Error{message: "database has neither repo nor url", kind: :config})
+      end
+    end
+  end
+
+  defp execute_duckdb(sql, timeout, max_rows) do
+    case DuckDB.Server.query(sql, timeout: timeout + 1_000) do
+      {:ok, raw} ->
+        truncate(raw.columns, raw.rows, raw.num_rows, max_rows)
+
+      {:error, %Error{} = error} ->
+        throw(error)
     end
   end
 

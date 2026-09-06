@@ -77,7 +77,11 @@ config :phoenix_lens,
   ]
 ```
 
-Questions, dashboards, and the audit log always persist on `repo:`. Point the query target at a **read replica** when you can.
+Questions, dashboards, settings, and the audit log always persist on `repo:`. Point the query target at a **read replica** when you can.
+
+## DuckDB engine
+
+`/lens/settings` can switch the query engine from PostgreSQL to DuckDB. DuckDB attaches the host Repo read-only as `repo` and any extra sources you add (Postgres, SQLite, DuckDB files, Parquet, CSV, JSON). The host app must depend on `{:duckdbex, "~> 0.4"}`. User SQL is still SELECT-only; `ATTACH` is not allowed in the editor.
 
 ## Embed a question
 

@@ -37,6 +37,16 @@ defmodule PhoenixLens.ConfigTest do
     assert cfg.databases["analytics"][:name] == "Analytics"
   end
 
+  test "postgres_dsn from a URL database" do
+    dsn =
+      Config.postgres_dsn(
+        id: "primary",
+        url: "postgres://alice:s3cret@db.internal:5556/app"
+      )
+
+    assert dsn == "postgresql://alice:s3cret@db.internal:5556/app"
+  end
+
   test "timeout and max_rows defaults" do
     Application.delete_env(:phoenix_lens, :timeout_ms)
     Application.delete_env(:phoenix_lens, :max_rows)

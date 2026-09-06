@@ -16,7 +16,11 @@ defmodule PhoenixLens.Application do
       System.halt(1)
     end
 
-    children = connection_children() ++ PhoenixLens.Standalone.children()
+    children =
+      connection_children() ++
+        [{PhoenixLens.DuckDB.Server, []}] ++
+        PhoenixLens.Standalone.children()
+
     opts = [strategy: :one_for_one, name: PhoenixLens.Supervisor]
     Supervisor.start_link(children, opts)
   end

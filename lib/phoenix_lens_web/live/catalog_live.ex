@@ -10,7 +10,7 @@ defmodule PhoenixLensWeb.CatalogLive do
      socket
      |> assign(:page, :catalog)
      |> assign(:page_title, "Data · Lens")
-     |> assign(:schemas, Catalog.schemas())}
+     |> assign(:schemas, Catalog.browse())}
   end
 
   @impl true
@@ -21,13 +21,15 @@ defmodule PhoenixLensWeb.CatalogLive do
         <div>
           <h1>Data</h1>
           <p class="lens-muted">
-            Ecto schemas from the host app. Protected fields never appear in query outputs.
+            Tables from the current query engine and Ecto schemas. Protected fields never appear in query outputs.
           </p>
         </div>
       </header>
 
       <%= if @schemas == [] do %>
-        <p class="lens-empty">No Ecto schemas found on the configured repo.</p>
+        <p class="lens-empty">
+          No tables found. Check that Lens is pointed at your Repo and the database is up.
+        </p>
       <% end %>
 
       <div class="lens-xray-grid">

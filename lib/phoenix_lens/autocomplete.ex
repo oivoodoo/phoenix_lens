@@ -1,7 +1,7 @@
 defmodule PhoenixLens.Autocomplete do
   @moduledoc false
 
-  alias PhoenixLens.{Catalog, Config}
+  alias PhoenixLens.{Catalog, Config, Policy}
 
   @keywords ~w(
     SELECT FROM WHERE GROUP BY ORDER LIMIT OFFSET JOIN LEFT RIGHT INNER
@@ -26,7 +26,7 @@ defmodule PhoenixLens.Autocomplete do
         }
       end)
 
-    merge_tables(from_ecto, db_tables())
+    merge_tables(from_ecto, db_tables_as_catalog())
   end
 
   def payload(tables \\ catalog()) do
@@ -152,42 +152,21 @@ defmodule PhoenixLens.Autocomplete do
     |> Enum.sort_by(& &1.name)
   end
 
-  defp db_tables do
-    repo = Config.get().metadata_repo
+  defp db_tables_as_catalog do
+    protected = Policy.protected_set(Config.get())
 
-    if is_nil(repo) do
-      []
-    else
-      case repo.query(
-             """
-             SELECT table_name, column_name, data_type
-             FROM information_schema.columns
-             WHERE table_schema = 'public'
-               AND table_name NOT LIKE 'phoenix_lens_%'
-               AND table_name <> 'schema_migrations'
-             ORDER BY table_name, ordinal_position
-             """,
-             [],
-             log: false
-           ) do
-        {:ok, %{rows: rows}} ->
-          rows
-          |> Enum.group_by(fn [table, _, _] -> table end)
-          |> Enum.map(fn {table, cols} ->
+    Enum.map(Catalog.database_tables(), fn table ->
+      %{
+        name: table.name,
+        columns:
+          Enum.map(table.columns, fn col ->
             %{
-              name: table,
-              columns:
-                Enum.map(cols, fn [_, name, type] ->
-                  %{name: name, protected: false, type: type}
-                end)
+              name: col.name,
+              protected: MapSet.member?(protected, String.downcase(col.name)),
+              type: col.type
             }
           end)
-
-        _ ->
-          []
-      end
-    end
-  rescue
-    _ -> []
+      }
+    end)
   end
 end

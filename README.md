@@ -39,6 +39,29 @@ end
 
 Then open `/lens`. Prefer a read replica; see [docs/Phoenix.md](docs/Phoenix.md).
 
+## DuckDB engine
+
+Default queries go straight to PostgreSQL. In `/lens/settings` you can switch the query engine to **DuckDB**. Lens then:
+
+1. Starts an in-process DuckDB
+2. Attaches the host Ecto Repo read-only as `repo` (`INSTALL postgres; ATTACH … (TYPE postgres, READ_ONLY)`)
+3. Lets you attach extra Postgres URLs, SQLite, DuckDB files, Parquet, CSV, or JSON to the **same** engine
+
+Host tables stay queryable as `users` or `repo.users`. Extra databases are `alias.table`. File sources become a view named after the alias.
+
+DuckDB is optional. Add the NIF to the **host** app (the dummy app already does):
+
+```elixir
+def deps do
+  [
+    {:phoenix_lens, "~> 0.1.0"},
+    {:duckdbex, "~> 0.4"}
+  ]
+end
+```
+
+Questions, dashboards, settings, and the audit log still live on the host Repo. Field policy still runs on every DuckDB result.
+
 ## Dummy app
 
 ```sh

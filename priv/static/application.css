@@ -602,6 +602,65 @@ button.tiny { padding: 2px 8px; }
 .lens-muted { color: var(--muted); }
 code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
 
+.lens-settings { display: flex; flex-direction: column; gap: 20px; }
+.lens-engine-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.lens-engine-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  text-align: left;
+  background: #fff;
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  padding: 16px 18px;
+  height: auto;
+  box-shadow: none;
+}
+.lens-engine-card:hover {
+  background: var(--brand-soft);
+  color: var(--text-dark);
+}
+.lens-engine-card.active {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(80, 158, 227, 0.22);
+  background: #fff;
+  color: var(--text);
+}
+.lens-engine-card strong {
+  font-size: 16px;
+  color: var(--text-dark);
+}
+.lens-engine-card span { font-weight: 400; line-height: 1.45; }
+.lens-error-inline { color: var(--danger); }
+.lens-source-form {
+  display: grid;
+  grid-template-columns: 160px 140px 1fr auto;
+  gap: 10px;
+  align-items: end;
+  margin-top: 16px;
+}
+.lens-source-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.lens-source-form .lens-field { min-width: 0; width: 100%; }
+.lens-source-form button { height: 40px; }
+
+@media (max-width: 800px) {
+  .lens-engine-grid,
+  .lens-source-form { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 800px) {
   .lens-top-links { display: none; }
   .lens-main { padding: 20px 16px 64px; }

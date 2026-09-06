@@ -62,6 +62,13 @@ defmodule PhoenixLens.NotebookTest do
     assert {:error, _} = Notebook.to_sql(nb)
   end
 
+  test "quotes dotted DuckDB table names" do
+    nb = %Notebook{table: "repo.users", limit: 10}
+    assert {:ok, sql} = Notebook.to_sql(nb)
+    assert sql =~ ~s[FROM "repo"."users"]
+    assert sql =~ "LIMIT 10"
+  end
+
   test "quotes string literals" do
     nb = %Notebook{
       table: "posts",

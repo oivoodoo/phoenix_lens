@@ -63,7 +63,7 @@ defmodule PhoenixLens.Policy do
       end
 
     Enum.flat_map(modules, fn mod ->
-      if function_exported?(mod, :__schema__, 1) and function_exported?(mod, :__changeset__, 0) do
+      if Code.ensure_loaded?(mod) and function_exported?(mod, :__schema__, 1) do
         redact_field_names(mod)
       else
         []

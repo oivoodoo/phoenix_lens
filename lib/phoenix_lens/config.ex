@@ -46,6 +46,24 @@ defmodule PhoenixLens.Config do
   def connection_name(id),
     do: Module.concat(PhoenixLens.Connections, Macro.camelize(to_string(id)))
 
+  @doc """
+  libpq / PostgreSQL URI string for DuckDB `ATTACH … (TYPE postgres)`.
+  """
+  def postgres_dsn(db) when is_list(db) do
+    cond do
+      is_binary(db[:url]) and db[:url] != "" ->
+        postgres_url_to_dsn(db[:url])
+
+      repo = db[:repo] ->
+        repo_to_dsn(repo)
+
+      true ->
+        nil
+    end
+  end
+
+  def postgres_dsn(_), do: nil
+
   defp metadata_repo(app, databases) do
     cond do
       repo = app[:repo] ->
@@ -125,6 +143,58 @@ defmodule PhoenixLens.Config do
       backoff_type: :stop
     ]
     |> maybe_ssl(uri)
+  end
+
+  defp repo_to_dsn(repo) when is_atom(repo) do
+    cfg = repo.config()
+
+    cond do
+      is_binary(cfg[:url]) and cfg[:url] != "" ->
+        postgres_url_to_dsn(cfg[:url])
+
+      true ->
+        ecto_cfg_to_dsn(cfg)
+    end
+  rescue
+    _ -> nil
+  end
+
+  defp repo_to_dsn(_), do: nil
+
+  defp ecto_cfg_to_dsn(cfg) do
+    [
+      conninfo_pair("host", cfg[:hostname] || "localhost"),
+      conninfo_pair("port", cfg[:port] || 5432),
+      conninfo_pair("dbname", cfg[:database]),
+      conninfo_pair("user", cfg[:username]),
+      conninfo_pair("password", cfg[:password])
+    ]
+    |> Enum.reject(&is_nil/1)
+    |> Enum.join(" ")
+  end
+
+  defp postgres_url_to_dsn(url) when is_binary(url) do
+    url
+    |> String.replace_prefix("ecto://", "postgresql://")
+    |> String.replace_prefix("postgres://", "postgresql://")
+  end
+
+  defp conninfo_pair(_key, nil), do: nil
+  defp conninfo_pair(_key, ""), do: nil
+
+  defp conninfo_pair(key, value) do
+    value = to_string(value)
+
+    if Regex.match?(~r/[\s'\\]/, value) do
+      escaped =
+        value
+        |> String.replace("\\", "\\\\")
+        |> String.replace("'", "\\'")
+
+      "#{key}='#{escaped}'"
+    else
+      "#{key}=#{value}"
+    end
   end
 
   defp maybe_ssl(opts, %URI{scheme: scheme}) when scheme in ["postgres", "postgresql"], do: opts

@@ -170,7 +170,7 @@ defmodule PhoenixLens.Notebook do
   end
 
   defp ident_ok(name) when is_binary(name) do
-    if Regex.match?(~r/\A[A-Za-z_][A-Za-z0-9_]*\z/, name) do
+    if Regex.match?(~r/\A[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*){0,3}\z/, name) do
       :ok
     else
       {:error, %PhoenixLens.Error{message: "Invalid identifier", kind: :sql}}
@@ -182,7 +182,12 @@ defmodule PhoenixLens.Notebook do
   defp op_ok(op) when op in @ops, do: :ok
   defp op_ok(_), do: {:error, %PhoenixLens.Error{message: "Invalid filter operator", kind: :sql}}
 
-  defp quote_ident(name), do: "\"" <> name <> "\""
+  defp quote_ident(name) do
+    name
+    |> to_string()
+    |> String.split(".")
+    |> Enum.map_join(".", fn part -> "\"" <> String.replace(part, "\"", "\"\"") <> "\"" end)
+  end
 
   defp quote_value(v) when is_integer(v), do: Integer.to_string(v)
   defp quote_value(v) when is_float(v), do: :erlang.float_to_binary(v, decimals: 6)

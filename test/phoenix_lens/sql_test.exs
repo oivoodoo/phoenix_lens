@@ -25,6 +25,10 @@ defmodule PhoenixLens.SQLTest do
     assert {:error, %{kind: :read_only}} = SQL.validate("DELETE FROM users")
   end
 
+  test "rejects ATTACH" do
+    assert {:error, %{kind: :read_only}} = SQL.validate("ATTACH 'other.db' AS warehouse")
+  end
+
   test "rejects INSERT" do
     assert {:error, %{kind: :read_only}} = SQL.validate("INSERT INTO users VALUES (1)")
   end

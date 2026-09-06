@@ -6,7 +6,7 @@ defmodule PhoenixLensWeb.HomeLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    schemas = Catalog.schemas()
+    schemas = Catalog.browse()
     questions = Questions.list()
     dashboards = Dashboards.list()
 

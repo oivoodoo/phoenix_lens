@@ -34,6 +34,7 @@ defmodule Dummy.MixProject do
       {:phoenix_live_view, "~> 1.0"},
       {:bandit, "~> 1.5"},
       {:jason, "~> 1.4"},
+      {:duckdbex, "~> 0.4"},
       {:phoenix_lens, path: ".."}
     ]
   end

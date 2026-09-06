@@ -9,7 +9,7 @@ Living spec. Idea one-pager: `docs/ideas/lens.md` (workspace root). ADRs: `docs/
 1. **Name.** Product: Lens. Hex + OTP app: `phoenix_lens` (`lens` is taken on Hex and would collide with the `Lens` module). Elixir modules: `PhoenixLens`, `PhoenixLensWeb`. Router macro: `lens "/lens"`.
 2. **Audience.** Phoenix developers / ops, not PMs. SQL is the interface. Host `:require_admin` (or equivalent) is the permission model.
 3. **Replacement.** v1 exists to uninstall a Metabase sidecar for *this* user, not to win a BI bake-off.
-4. **Postgres only.** Postgrex. No MySQL/SQLite adapters in v1.
+4. **Default engine PostgreSQL** (Postgrex). Optional DuckDB engine attaches the host Repo read-only and extra sources (Postgres, SQLite, DuckDB files, Parquet, CSV, JSON) in one in-process engine. Host apps add `{:duckdbex, "~> 0.4"}`.
 5. **Auth.** None inside the library when mounted. Optional HTTP basic auth (PgHero pattern). Identity for audit: `conn.assigns[:current_user]` (configurable assign key); stringified; `"anonymous"` if missing.
 6. **Mask default.** Protected cells become the atom `:redacted`, rendered `[redacted]`. WHERE may reference protected columns. Stored SQL / audit viewer redact email- and phone-like literals.
 7. **Not certified.** README says designed for GDPR/HIPAA dashboard use (minimization, audit, no PHI in sinks). No “compliant” / “certified” claim.
