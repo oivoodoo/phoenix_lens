@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content={get_csrf_token()} />
+    <.live_title default="Dummy" suffix=" · Lens">
+      {assigns[:page_title]}
+    </.live_title>
+    <style>
+      :root { color-scheme: light; }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+        background: #f4f1ea;
+        color: #1f1a14;
+      }
+      a { color: #0b6e4f; }
+      .wrap { max-width: 720px; margin: 48px auto; padding: 0 20px; }
+      .card {
+        background: #fff;
+        border: 1px solid #e2d8c8;
+        border-radius: 12px;
+        padding: 28px 32px;
+      }
+      .btn {
+        display: inline-block;
+        background: #0b6e4f;
+        color: #fff !important;
+        text-decoration: none;
+        padding: 12px 18px;
+        border-radius: 8px;
+        font-weight: 600;
+      }
+      .btn:hover { background: #095c42; }
+      code { background: #f0ebe3; padding: 1px 5px; border-radius: 4px; }
+      ul { line-height: 1.7; }
+    </style>
+  </head>
+  <body>
+    {@inner_content}
+  </body>
+</html>

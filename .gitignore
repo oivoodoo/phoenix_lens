@@ -1,0 +1,13 @@
+/_build/
+/cover/
+/deps/
+/doc/
+/.fetch
+erl_crash.dump
+*.ez
+phoenix_lens-*.tar
+/tmp/
+dummy/_build/
+dummy/deps/
+dummy/.elixir_ls/
+.elixir_ls/

@@ -1,0 +1,29 @@
+<div class="lens-shell">
+  <header class="lens-topbar">
+    <a class="lens-logo" href={"#{@lens_prefix}"} aria-label="Lens home">
+      <span class="lens-mark" aria-hidden="true"></span>
+      <span class="lens-word">Lens</span>
+    </a>
+
+    <form class="lens-search" action={"#{@lens_prefix}/questions"} method="get" role="search">
+      <input type="search" name="q" placeholder="Search…" aria-label="Search questions" />
+    </form>
+
+    <nav class="lens-top-links" aria-label="Primary">
+      <a href={"#{@lens_prefix}/dashboards"} class={active_class(@page, :dashboards)}>Dashboards</a>
+      <a href={"#{@lens_prefix}/questions"} class={active_class(@page, :questions)}>Questions</a>
+      <a href={"#{@lens_prefix}/catalog"} class={active_class(@page, :catalog)}>Data</a>
+      <a href={"#{@lens_prefix}/audit"} class={active_class(@page, :audit)}>Audit</a>
+    </nav>
+
+    <a class="lens-ask-btn" href={"#{@lens_prefix}/ask"}>
+      <span aria-hidden="true">✦</span> Ask a question
+    </a>
+  </header>
+
+  <main class="lens-main">
+    <.flash kind={:info} flash={@flash} />
+    <.flash kind={:error} flash={@flash} />
+    {@inner_content}
+  </main>
+</div>
