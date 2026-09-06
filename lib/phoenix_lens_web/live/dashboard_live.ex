@@ -17,6 +17,7 @@ defmodule PhoenixLensWeb.DashboardLive do
          |> assign(:page, :dashboards)
          |> assign(:page_title, "#{dashboard["name"]} · Lens")
          |> assign(:dashboard, dashboard)
+         |> assign(:name, dashboard["name"])
          |> assign(:cards, cards)
          |> assign(:from, from)
          |> assign(:to, to)}
@@ -36,15 +37,30 @@ defmodule PhoenixLensWeb.DashboardLive do
      |> assign(:page, :dashboards)
      |> assign(:page_title, "Dashboards · Lens")
      |> assign(:dashboards, Dashboards.list())
-     |> assign(:dashboard, :index)
-     |> assign(:name, "")}
+     |> assign(:dashboard, :index)}
   end
 
   @impl true
-  def handle_event("create", %{"name" => name}, socket) do
-    case Dashboards.save(%{name: name}) do
+  def handle_event("create", _params, socket) do
+    case Dashboards.save(%{name: default_name(socket.assigns.dashboards)}) do
       {:ok, dash} ->
         {:noreply, push_navigate(socket, to: lens_path(socket, "/dashboards/#{dash["id"]}"))}
+
+      {:error, error} ->
+        {:noreply, put_flash(socket, :error, error.message)}
+    end
+  end
+
+  def handle_event("rename", %{"name" => name}, socket) do
+    name = blank_to_default(name)
+
+    case Dashboards.save(%{id: socket.assigns.dashboard["id"], name: name}) do
+      {:ok, dash} ->
+        {:noreply,
+         socket
+         |> assign(:dashboard, Map.put(socket.assigns.dashboard, "name", dash["name"]))
+         |> assign(:name, dash["name"])
+         |> assign(:page_title, "#{dash["name"]} · Lens")}
 
       {:error, error} ->
         {:noreply, put_flash(socket, :error, error.message)}
@@ -72,17 +88,7 @@ defmodule PhoenixLensWeb.DashboardLive do
     <div class="lens-browse">
       <header class="lens-browse-head">
         <h1>Dashboards</h1>
-        <form phx-submit="create" class="lens-inline">
-          <input
-            class="lens-field"
-            type="text"
-            name="name"
-            placeholder="New dashboard"
-            value={@name}
-            autocomplete="off"
-          />
-          <button type="submit">Create</button>
-        </form>
+        <button type="button" phx-click="create">New dashboard</button>
       </header>
       <div class="lens-folder-grid">
         <a
@@ -112,10 +118,17 @@ defmodule PhoenixLensWeb.DashboardLive do
     ~H"""
     <article class="lens-dash">
       <header class="lens-dash-head">
-        <div>
-          <p class="lens-kicker">Dashboard</p>
-          <h1>{@dashboard["name"]}</h1>
-        </div>
+        <form phx-change="rename" phx-submit="rename" class="lens-title-form">
+          <input
+            class="lens-title-input"
+            type="text"
+            name="name"
+            value={@name}
+            placeholder="New dashboard"
+            autocomplete="off"
+            phx-debounce="blur"
+          />
+        </form>
         <button type="button" class="ghost" phx-click="delete" data-confirm="Delete this dashboard?">
           Delete
         </button>
@@ -185,5 +198,26 @@ defmodule PhoenixLensWeb.DashboardLive do
       result: result,
       error: error
     }
+  end
+
+  defp default_name(dashboards) do
+    names = MapSet.new(dashboards, & &1["name"])
+
+    if "New dashboard" in names do
+      next =
+        Stream.iterate(2, &(&1 + 1))
+        |> Enum.find(fn n -> "New dashboard #{n}" not in names end)
+
+      "New dashboard #{next}"
+    else
+      "New dashboard"
+    end
+  end
+
+  defp blank_to_default(name) do
+    case String.trim(to_string(name || "")) do
+      "" -> "New dashboard"
+      name -> name
+    end
   end
 end

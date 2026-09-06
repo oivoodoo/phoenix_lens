@@ -313,8 +313,9 @@ h2 { font-size: 16px; margin: 0; }
   color: var(--text-dark);
 }
 
+.lens-title-form { flex: 1; min-width: 0; }
 .lens-title-input {
-  flex: 1;
+  width: 100%;
   font: 700 22px/1.3 Lato, sans-serif;
   color: var(--text-dark);
   border: 0;
@@ -323,6 +324,7 @@ h2 { font-size: 16px; margin: 0; }
   min-width: 0;
 }
 .lens-title-input:focus { outline: none; border-bottom: 2px solid var(--brand); }
+.lens-title-input::placeholder { color: var(--muted); font-weight: 700; }
 
 .lens-sql { position: relative; }
 .lens-ask textarea,
@@ -471,6 +473,75 @@ button.tiny { padding: 2px 8px; }
   background: var(--brand-soft);
   display: grid;
   place-items: center;
+}
+
+.lens-mode {
+  display: flex;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.lens-mode button {
+  background: #fff;
+  color: var(--text);
+  border: 0;
+  border-radius: 0;
+  padding: 7px 12px;
+}
+.lens-mode button.active {
+  background: var(--brand);
+  color: #fff;
+}
+
+.lens-notebook { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+.lens-nb-step {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px 18px;
+  box-shadow: var(--shadow);
+}
+.lens-nb-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.lens-nb-head h2 { font-size: 16px; }
+.lens-nb-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+  font-weight: 900;
+  font-size: 12px;
+  display: grid;
+  place-items: center;
+}
+.lens-nb-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 8px 0;
+}
+.lens-nb-row .lens-field { min-width: 140px; }
+.lens-nb-breakouts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.lens-nb-run { display: flex; gap: 8px; align-items: center; }
+.lens-nb-sql {
+  background: #1c2530;
+  color: #e8eef4;
+  padding: 14px 16px;
+  border-radius: 8px;
+  overflow: auto;
+  font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .lens-preview-bar {
