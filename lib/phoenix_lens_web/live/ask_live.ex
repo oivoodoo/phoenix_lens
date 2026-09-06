@@ -44,25 +44,27 @@ defmodule PhoenixLensWeb.AskLive do
         _ -> starter_sql(params)
       end
 
-    {:ok,
-     socket
-     |> assign(:page, :ask)
-     |> assign(:page_title, "New question · Lens")
-     |> assign(:sql, sql)
-     |> assign(:name, "")
-     |> assign(:viz, "table")
-     |> assign(:database_id, default_db(socket))
-     |> assign(:result, nil)
-     |> assign(:error, nil)
-     |> assign(:editor_open, true)
-     |> assign(:show_sql, false)
-     |> assign(:mode, mode)
-     |> assign(:notebook, nb)
-     |> assign(:tables, tables)
-     |> assign(:columns, columns_for(ac, nb.table))
-     |> assign(:ops, @ops)
-     |> assign(:aggs, @aggs)
-     |> assign(:ac, ac)}
+    socket =
+      socket
+      |> assign(:page, :ask)
+      |> assign(:page_title, "New question · Lens")
+      |> assign(:sql, sql)
+      |> assign(:name, "")
+      |> assign(:viz, "table")
+      |> assign(:database_id, default_db(socket))
+      |> assign(:result, nil)
+      |> assign(:error, nil)
+      |> assign(:editor_open, true)
+      |> assign(:show_sql, false)
+      |> assign(:mode, mode)
+      |> assign(:notebook, nb)
+      |> assign(:tables, tables)
+      |> assign(:columns, columns_for(ac, nb.table))
+      |> assign(:ops, @ops)
+      |> assign(:aggs, @aggs)
+      |> assign(:ac, ac)
+
+    {:ok, if(nb.table, do: preview(socket), else: socket)}
   end
 
   @impl true
@@ -72,13 +74,7 @@ defmodule PhoenixLensWeb.AskLive do
   end
 
   def handle_event("visualize", _params, socket) do
-    case Notebook.to_sql(socket.assigns.notebook) do
-      {:ok, sql} ->
-        run_sql(assign(socket, :sql, sql), sql, %{})
-
-      {:error, error} ->
-        {:noreply, assign(socket, :error, error)}
-    end
+    {:noreply, preview(socket)}
   end
 
   def handle_event("change", params, socket) do
@@ -122,7 +118,7 @@ defmodule PhoenixLensWeb.AskLive do
          columns_for(socket.assigns.ac, table)}
       end
 
-    {:noreply, socket |> assign(:notebook, nb) |> assign(:columns, cols) |> sync_sql(nb)}
+    {:noreply, put_notebook(socket, nb, cols)}
   end
 
   def handle_event("add_filter", _params, socket) do
@@ -132,13 +128,13 @@ defmodule PhoenixLensWeb.AskLive do
         &(&1 ++ [new_filter(&1, socket.assigns.columns)])
       )
 
-    {:noreply, assign(socket, :notebook, nb) |> sync_sql(nb)}
+    {:noreply, put_notebook(socket, nb)}
   end
 
   def handle_event("remove_filter", %{"id" => id}, socket) do
     id = String.to_integer(id)
     nb = update_in(socket.assigns.notebook.filters, &Enum.reject(&1, fn f -> f.id == id end))
-    {:noreply, assign(socket, :notebook, nb) |> sync_sql(nb)}
+    {:noreply, put_notebook(socket, nb)}
   end
 
   def handle_event("update_filter", params, socket) do
@@ -158,7 +154,7 @@ defmodule PhoenixLensWeb.AskLive do
         end)
       end)
 
-    {:noreply, assign(socket, :notebook, nb) |> sync_sql(nb)}
+    {:noreply, put_notebook(socket, nb)}
   end
 
   def handle_event("add_agg", _params, socket) do
@@ -167,13 +163,13 @@ defmodule PhoenixLensWeb.AskLive do
         aggs ++ [%{id: next_id(aggs), fun: "count", column: nil}]
       end)
 
-    {:noreply, assign(socket, :notebook, nb) |> sync_sql(nb)}
+    {:noreply, put_notebook(socket, nb)}
   end
 
   def handle_event("remove_agg", %{"id" => id}, socket) do
     id = String.to_integer(id)
     nb = update_in(socket.assigns.notebook.aggregations, &Enum.reject(&1, fn a -> a.id == id end))
-    {:noreply, assign(socket, :notebook, nb) |> sync_sql(nb)}
+    {:noreply, put_notebook(socket, nb)}
   end
 
   def handle_event("update_agg", params, socket) do
@@ -192,25 +188,25 @@ defmodule PhoenixLensWeb.AskLive do
         end)
       end)
 
-    {:noreply, assign(socket, :notebook, nb) |> sync_sql(nb)}
+    {:noreply, put_notebook(socket, nb)}
   end
 
   def handle_event("add_breakout", _params, socket) do
     col = socket.assigns.columns |> List.first() |> then(&(&1 && &1.name))
     nb = update_in(socket.assigns.notebook.breakouts, &(&1 ++ List.wrap(col)))
-    {:noreply, assign(socket, :notebook, nb) |> sync_sql(nb)}
+    {:noreply, put_notebook(socket, nb)}
   end
 
   def handle_event("remove_breakout", %{"index" => index}, socket) do
     i = String.to_integer(index)
     nb = update_in(socket.assigns.notebook.breakouts, &List.delete_at(&1, i))
-    {:noreply, assign(socket, :notebook, nb) |> sync_sql(nb)}
+    {:noreply, put_notebook(socket, nb)}
   end
 
   def handle_event("update_breakout", %{"index" => index, "column" => col}, socket) do
     i = String.to_integer(index)
     nb = update_in(socket.assigns.notebook.breakouts, &List.replace_at(&1, i, col))
-    {:noreply, assign(socket, :notebook, nb) |> sync_sql(nb)}
+    {:noreply, put_notebook(socket, nb)}
   end
 
   def handle_event("set_limit", %{"limit" => limit}, socket) do
@@ -221,7 +217,7 @@ defmodule PhoenixLensWeb.AskLive do
       end
 
     nb = %{socket.assigns.notebook | limit: n}
-    {:noreply, assign(socket, :notebook, nb) |> sync_sql(nb)}
+    {:noreply, put_notebook(socket, nb)}
   end
 
   def handle_event("save", _params, socket) do
@@ -250,22 +246,27 @@ defmodule PhoenixLensWeb.AskLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="lens-question">
-      <header class="lens-question-head">
+    <div class={if(@mode == :notebook, do: "lens-ask-page is-notebook", else: "lens-ask-page is-sql")}>
+      <header class="lens-ask-head">
         <form phx-change="change" class="lens-title-form">
+          <label class="lens-sr-only" for="lens-question-name">Question name</label>
           <input
+            id="lens-question-name"
             class="lens-title-input"
             type="text"
             name="name"
             value={@name}
             placeholder="What is the name of your question?"
             phx-debounce="blur"
+            autocomplete="off"
           />
         </form>
-        <div class="lens-question-actions">
-          <div class="lens-mode">
+        <div class="lens-ask-toolbar">
+          <div class="lens-mode" role="tablist" aria-label="Editor mode">
             <button
               type="button"
+              role="tab"
+              aria-selected={@mode == :notebook}
               class={if @mode == :notebook, do: "active"}
               phx-click="set_mode"
               phx-value-mode="notebook"
@@ -274,6 +275,8 @@ defmodule PhoenixLensWeb.AskLive do
             </button>
             <button
               type="button"
+              role="tab"
+              aria-selected={@mode == :sql}
               class={if @mode == :sql, do: "active"}
               phx-click="set_mode"
               phx-value-mode="sql"
@@ -281,65 +284,74 @@ defmodule PhoenixLensWeb.AskLive do
               Native query
             </button>
           </div>
-          <button type="button" phx-click="save">Save</button>
+          <button type="button" class="lens-save-btn" phx-click="save">Save</button>
         </div>
       </header>
 
-      <%= if @mode == :notebook do %>
-        <.notebook
-          notebook={@notebook}
-          tables={@tables}
-          columns={@columns}
-          ops={@ops}
-          aggs={@aggs}
-          sql={@sql}
-          show_sql={@show_sql}
-        />
-      <% else %>
-        <form id="ask-form" phx-submit="run" phx-change="change" class="lens-ask">
-          <div class="lens-filter-row">
-            <label class="lens-chip">
-              Database
-              <select name="database_id">
-                <option
-                  :for={db <- @lens_databases}
-                  value={db[:id] || db.id}
-                  selected={to_string(db[:id] || db.id) == to_string(@database_id)}
-                >
-                  {db[:name] || db.name}
-                </option>
-              </select>
-            </label>
-            <button type="submit">Refresh</button>
-          </div>
-          <SqlEditor.editor
-            :if={@editor_open}
-            id="lens-sql-ask"
-            name="sql"
-            value={@sql}
-            catalog={@ac}
-          />
-        </form>
-      <% end %>
+      <div class="lens-ask-split">
+        <div class="lens-ask-editor">
+          <%= if @mode == :notebook do %>
+            <.notebook
+              notebook={@notebook}
+              tables={@tables}
+              columns={@columns}
+              ops={@ops}
+              aggs={@aggs}
+              sql={@sql}
+              show_sql={@show_sql}
+            />
+          <% else %>
+            <form id="ask-form" phx-submit="run" phx-change="change" class="lens-ask">
+              <div class="lens-filter-row">
+                <label class="lens-chip">
+                  Database
+                  <select name="database_id">
+                    <option
+                      :for={db <- @lens_databases}
+                      value={db[:id] || db.id}
+                      selected={to_string(db[:id] || db.id) == to_string(@database_id)}
+                    >
+                      {db[:name] || db.name}
+                    </option>
+                  </select>
+                </label>
+                <button type="submit">Run</button>
+              </div>
+              <SqlEditor.editor
+                :if={@editor_open}
+                id="lens-sql-ask"
+                name="sql"
+                value={@sql}
+                catalog={@ac}
+              />
+            </form>
+          <% end %>
+        </div>
 
-      <%= if @error do %>
-        <div class="lens-error">{@error.message}</div>
-      <% end %>
-
-      <section class="lens-viz-card">
-        <%= if @result do %>
-          <.live_component
-            module={PhoenixLensWeb.ResultPreview}
-            id="ask-preview"
-            result={@result}
-            viz={@viz}
-          />
-        <% else %>
-          <p class="lens-empty">
-            Pick a table, filter or summarize, then Visualize. Protected fields stay masked.
-          </p>
-        <% end %>
-      </section>
+        <section class="lens-ask-preview" aria-label="Results">
+          <div :if={@error} class="lens-error">{@error.message}</div>
+          <%= if @result do %>
+            <.live_component
+              module={PhoenixLensWeb.ResultPreview}
+              id="ask-preview"
+              result={@result}
+              viz={@viz}
+            />
+          <% else %>
+            <div class="lens-preview-empty">
+              <span class="lens-preview-mark" aria-hidden="true">✦</span>
+              <h2>{if @notebook.table, do: "No rows yet", else: "Pick your data"}</h2>
+              <p>
+                <%= if @notebook.table do %>
+                  Adjust filters or summarize, then results show up here. Protected fields stay masked.
+                <% else %>
+                  Choose a table in the notebook. Filter, summarize, and the preview fills this pane.
+                <% end %>
+              </p>
+            </div>
+          <% end %>
+        </section>
+      </div>
     </div>
     """
   end
@@ -355,30 +367,39 @@ defmodule PhoenixLensWeb.AskLive do
   def notebook(assigns) do
     ~H"""
     <div class="lens-notebook">
-      <section class="lens-nb-step">
+      <section class={step_class(@notebook.table != nil)}>
         <div class="lens-nb-head">
           <span class="lens-nb-num">1</span>
-          <h2>Pick your data</h2>
+          <div>
+            <h2>Data</h2>
+            <p class="lens-nb-sub">Table to query</p>
+          </div>
         </div>
         <form phx-change="pick_table">
           <select name="table" class="lens-field">
-            <option value="">Select a table…</option>
+            <option value="">Choose a table…</option>
             <option :for={t <- @tables} value={t} selected={t == @notebook.table}>{t}</option>
           </select>
         </form>
+        <p :if={@notebook.table} class="lens-nb-meta">
+          {length(@columns)} {if length(@columns) == 1, do: "field", else: "fields"} · protected stay masked
+        </p>
       </section>
 
-      <section class="lens-nb-step">
+      <section class={step_class(@notebook.filters != [])}>
         <div class="lens-nb-head">
           <span class="lens-nb-num">2</span>
-          <h2>Filter</h2>
+          <div>
+            <h2>Filter</h2>
+            <p class="lens-nb-sub">Keep matching rows</p>
+          </div>
           <button
             type="button"
-            class="ghost tiny"
+            class="ghost"
             phx-click="add_filter"
             disabled={is_nil(@notebook.table)}
           >
-            + Add a filter
+            Add filter
           </button>
         </div>
         <form
@@ -403,23 +424,30 @@ defmodule PhoenixLensWeb.AskLive do
             name="value"
             value={f.value}
             placeholder="value"
+            phx-debounce="400"
           />
-          <button type="button" class="ghost tiny" phx-click="remove_filter" phx-value-id={f.id}>✕</button>
-        </form>
-        <p :if={@notebook.filters == []} class="lens-muted">No filters — all rows from this table.</p>
-      </section>
-
-      <section class="lens-nb-step">
-        <div class="lens-nb-head">
-          <span class="lens-nb-num">3</span>
-          <h2>Summarize</h2>
           <button
             type="button"
-            class="ghost tiny"
-            phx-click="add_agg"
-            disabled={is_nil(@notebook.table)}
+            class="ghost icon"
+            phx-click="remove_filter"
+            phx-value-id={f.id}
+            aria-label="Remove filter"
           >
-            + Add a metric
+            ×
+          </button>
+        </form>
+        <p :if={@notebook.filters == []} class="lens-nb-hint">All rows from this table.</p>
+      </section>
+
+      <section class={step_class(@notebook.aggregations != [] or @notebook.breakouts != [])}>
+        <div class="lens-nb-head">
+          <span class="lens-nb-num">3</span>
+          <div>
+            <h2>Summarize</h2>
+            <p class="lens-nb-sub">Metrics and grouping</p>
+          </div>
+          <button type="button" class="ghost" phx-click="add_agg" disabled={is_nil(@notebook.table)}>
+            Add metric
           </button>
         </div>
         <form
@@ -437,11 +465,20 @@ defmodule PhoenixLensWeb.AskLive do
               {col.name}
             </option>
           </select>
-          <button type="button" class="ghost tiny" phx-click="remove_agg" phx-value-id={a.id}>✕</button>
+          <button
+            type="button"
+            class="ghost icon"
+            phx-click="remove_agg"
+            phx-value-id={a.id}
+            aria-label="Remove metric"
+          >
+            ×
+          </button>
         </form>
+        <p :if={@notebook.aggregations == []} class="lens-nb-hint">Raw rows, no aggregation.</p>
 
         <div class="lens-nb-breakouts">
-          <span class="lens-muted">by</span>
+          <span class="lens-nb-by">Grouped by</span>
           <form
             :for={{col, i} <- Enum.with_index(@notebook.breakouts)}
             class="lens-nb-row"
@@ -451,15 +488,23 @@ defmodule PhoenixLensWeb.AskLive do
             <select name="column" class="lens-field">
               <option :for={c <- @columns} value={c.name} selected={c.name == col}>{c.name}</option>
             </select>
-            <button type="button" class="ghost tiny" phx-click="remove_breakout" phx-value-index={i}>✕</button>
+            <button
+              type="button"
+              class="ghost icon"
+              phx-click="remove_breakout"
+              phx-value-index={i}
+              aria-label="Remove grouping"
+            >
+              ×
+            </button>
           </form>
           <button
             type="button"
-            class="ghost tiny"
+            class="ghost"
             phx-click="add_breakout"
             disabled={is_nil(@notebook.table)}
           >
-            + Group by
+            Group by
           </button>
         </div>
       </section>
@@ -467,9 +512,12 @@ defmodule PhoenixLensWeb.AskLive do
       <section class="lens-nb-step">
         <div class="lens-nb-head">
           <span class="lens-nb-num">4</span>
-          <h2>Row limit</h2>
+          <div>
+            <h2>Limit</h2>
+            <p class="lens-nb-sub">Max rows in the preview</p>
+          </div>
         </div>
-        <form phx-change="set_limit">
+        <form phx-change="set_limit" class="lens-nb-limit">
           <input
             class="lens-field"
             type="number"
@@ -478,12 +526,17 @@ defmodule PhoenixLensWeb.AskLive do
             name="limit"
             value={@notebook.limit}
           />
+          <span class="lens-muted">rows</span>
         </form>
       </section>
 
       <div class="lens-nb-run">
-        <button type="button" phx-click="visualize" disabled={is_nil(@notebook.table)}>Visualize</button>
-        <button type="button" class="ghost" phx-click="toggle_sql">View SQL</button>
+        <button type="button" phx-click="visualize" disabled={is_nil(@notebook.table)}>
+          Visualize
+        </button>
+        <button type="button" class="ghost" phx-click="toggle_sql">
+          {if @show_sql, do: "Hide SQL", else: "View SQL"}
+        </button>
       </div>
 
       <pre :if={@show_sql} class="lens-nb-sql">{@sql}</pre>
@@ -500,12 +553,40 @@ defmodule PhoenixLensWeb.AskLive do
       |> assign(:database_id, database_id)
       |> assign(:name, params["name"] || socket.assigns.name)
 
+    {:noreply, execute_sql(socket, sql, database_id)}
+  end
+
+  defp put_notebook(socket, nb, cols \\ :keep) do
+    socket =
+      if cols == :keep do
+        socket
+      else
+        assign(socket, :columns, cols)
+      end
+
+    socket
+    |> assign(:notebook, nb)
+    |> sync_sql(nb)
+    |> preview()
+  end
+
+  defp preview(socket) do
+    case Notebook.to_sql(socket.assigns.notebook) do
+      {:ok, sql} ->
+        execute_sql(assign(socket, :sql, sql), sql, socket.assigns.database_id)
+
+      {:error, _} ->
+        socket |> assign(:result, nil) |> assign(:error, nil)
+    end
+  end
+
+  defp execute_sql(socket, sql, database_id) do
     case Query.run(sql, database: database_id, actor: socket.assigns.lens_actor) do
       {:ok, result} ->
-        {:noreply, socket |> assign(:result, result) |> assign(:error, nil)}
+        socket |> assign(:result, result) |> assign(:error, nil)
 
       {:error, error} ->
-        {:noreply, socket |> assign(:result, nil) |> assign(:error, error)}
+        socket |> assign(:result, nil) |> assign(:error, error)
     end
   end
 
@@ -539,6 +620,9 @@ defmodule PhoenixLensWeb.AskLive do
     |> Enum.max(fn -> 0 end)
     |> then(&(&1 + 1))
   end
+
+  defp step_class(true), do: "lens-nb-step is-done"
+  defp step_class(false), do: "lens-nb-step"
 
   defp default_db(socket) do
     case socket.assigns[:lens_databases] do

@@ -26,7 +26,16 @@ defmodule PhoenixLensWeb.Helpers do
   def lens_asset_path(socket_or_conn, file) do
     prefix = prefix(socket_or_conn)
     path = Path.join(prefix, "assets/#{file}") |> String.replace(~r{/+}, "/")
-    if String.starts_with?(path, "/"), do: path, else: "/" <> path
+    path = if String.starts_with?(path, "/"), do: path, else: "/" <> path
+    path <> "?v=#{asset_vsn()}.s"
+  end
+
+  defp asset_vsn do
+    case Application.spec(:phoenix_lens, :vsn) do
+      vsn when is_list(vsn) -> List.to_string(vsn)
+      vsn when is_binary(vsn) -> vsn
+      _ -> "1"
+    end
   end
 
   def display_cell(value), do: Result.display_cell(value)

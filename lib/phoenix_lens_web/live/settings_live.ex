@@ -10,6 +10,8 @@ defmodule PhoenixLensWeb.SettingsLive do
      socket
      |> assign(:page, :settings)
      |> assign(:page_title, "Settings · Lens")
+     |> assign(:source_modal, false)
+     |> assign(:source_error, nil)
      |> assign(:new_alias, "")
      |> assign(:new_kind, "postgres")
      |> assign(:new_dsn, "")
@@ -39,6 +41,28 @@ defmodule PhoenixLensWeb.SettingsLive do
      |> refresh()}
   end
 
+  def handle_event("open_source_modal", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:source_modal, true)
+     |> assign(:source_error, nil)
+     |> assign(:new_alias, "")
+     |> assign(:new_kind, "postgres")
+     |> assign(:new_dsn, "")}
+  end
+
+  def handle_event("close_source_modal", _params, socket) do
+    {:noreply, socket |> assign(:source_modal, false) |> assign(:source_error, nil)}
+  end
+
+  def handle_event("source_form", params, socket) do
+    {:noreply,
+     socket
+     |> assign(:new_alias, params["alias"] || socket.assigns.new_alias)
+     |> assign(:new_kind, params["kind"] || socket.assigns.new_kind)
+     |> assign(:new_dsn, params["dsn"] || socket.assigns.new_dsn)}
+  end
+
   def handle_event("add_source", params, socket) do
     attrs = %{
       alias: params["alias"],
@@ -50,8 +74,10 @@ defmodule PhoenixLensWeb.SettingsLive do
       {:ok, _} ->
         {:noreply,
          socket
+         |> assign(:source_modal, false)
+         |> assign(:source_error, nil)
          |> assign(:new_alias, "")
-         |> assign(:new_kind, params["kind"] || "postgres")
+         |> assign(:new_kind, "postgres")
          |> assign(:new_dsn, "")
          |> put_flash(:info, "Source attached")
          |> refresh()}
@@ -62,7 +88,7 @@ defmodule PhoenixLensWeb.SettingsLive do
          |> assign(:new_alias, params["alias"] || "")
          |> assign(:new_kind, params["kind"] || "postgres")
          |> assign(:new_dsn, params["dsn"] || "")
-         |> put_flash(:error, error.message)}
+         |> assign(:source_error, error.message)}
     end
   end
 
@@ -99,40 +125,51 @@ defmodule PhoenixLensWeb.SettingsLive do
           <h2>Query engine</h2>
         </header>
 
-        <div class="lens-engine-grid">
+        <div class="lens-engine-grid" role="radiogroup" aria-label="Query engine">
           <button
             type="button"
-            class={"lens-engine-card" <> if(@engine == :postgresql, do: " active", else: "")}
+            role="radio"
+            aria-checked={@engine == :postgresql}
+            class={engine_card_class(@engine, :postgresql)}
             phx-click="set_engine"
             phx-value-engine="postgresql"
           >
-            <strong>PostgreSQL</strong>
-            <span>Direct read-only queries through the host Repo (or replica URL). Default.</span>
+            <span class="lens-engine-check" aria-hidden="true"></span>
+            <span class="lens-engine-copy">
+              <span class="lens-engine-name">PostgreSQL</span>
+              <span class="lens-engine-desc">
+                Direct read-only queries through the host Repo or replica URL.
+              </span>
+            </span>
           </button>
           <button
             type="button"
-            class={"lens-engine-card" <> if(@engine == :duckdb, do: " active", else: "")}
+            role="radio"
+            aria-checked={@engine == :duckdb}
+            class={engine_card_class(@engine, :duckdb)}
             phx-click="set_engine"
             phx-value-engine="duckdb"
           >
-            <strong>DuckDB</strong>
-            <span>
-              One in-process engine. Host Postgres is attached read-only as <code>repo</code>, plus any extra sources below.
+            <span class="lens-engine-check" aria-hidden="true"></span>
+            <span class="lens-engine-copy">
+              <span class="lens-engine-name">DuckDB</span>
+              <span class="lens-engine-desc">
+                One engine. Host Postgres attaches as <code>repo</code>, plus extra sources below.
+              </span>
             </span>
           </button>
         </div>
 
-        <p class="lens-muted" style="margin: 16px 0 0;">
+        <p class="lens-engine-status">
           <%= if @status.available? do %>
-            duckdbex is loaded. Engine status: <strong>{status_label(@status)}</strong>.
+            <span class={"lens-status-pill is-#{@status.status}"}>{status_label(@status)}</span>
+            duckdbex loaded
           <% else %>
-            DuckDB is optional. Add <code>{"{:duckdbex, \"~> 0.4\"}"}</code> to the host mix.exs
-            and run <code>mix deps.get</code> before switching.
-          <% end %>
-          <%= if @status.error do %>
-            <br /> <span class="lens-error-inline">{@status.error}</span>
+            DuckDB needs <code>{"{:duckdbex, \"~> 0.4\"}"}</code>
+            in the host mix.exs, then <code>mix deps.get</code>.
           <% end %>
         </p>
+        <p :if={@status.error} class="lens-error-inline">{@status.error}</p>
       </section>
 
       <section class="lens-dash-card">
@@ -174,6 +211,7 @@ defmodule PhoenixLensWeb.SettingsLive do
       <section class="lens-dash-card">
         <header class="lens-card-head">
           <h2>Extra sources</h2>
+          <button type="button" phx-click="open_source_modal">Add source</button>
         </header>
         <p class="lens-muted">
           Attach more Postgres databases, SQLite, DuckDB files, Parquet, CSV, or JSON to the
@@ -213,45 +251,73 @@ defmodule PhoenixLensWeb.SettingsLive do
             </tr>
           </tbody>
         </table>
-
-        <form phx-submit="add_source" class="lens-source-form">
-          <label>
-            Alias
-            <input
-              class="lens-field"
-              type="text"
-              name="alias"
-              value={@new_alias}
-              placeholder="warehouse"
-              autocomplete="off"
-            />
-          </label>
-          <label>
-            Kind
-            <select class="lens-field" name="kind">
-              <option :for={kind <- Settings.kinds()} value={kind} selected={kind == @new_kind}>
-                {kind}
-              </option>
-            </select>
-          </label>
-          <label class="lens-source-dsn">
-            Connection / path
-            <input
-              class="lens-field"
-              type="text"
-              name="dsn"
-              value={@new_dsn}
-              placeholder="postgresql://user:pass@host:5432/dbname"
-              autocomplete="off"
-            />
-          </label>
-          <button type="submit">Add source</button>
-        </form>
-        <p class="lens-muted" style="margin-top: 8px;">
-          Postgres: URI or <code>host=… port=… dbname=… user=… password=…</code>.
-          Files: a path or <code>https://</code> / <code>s3://</code> URL.
-        </p>
       </section>
+
+      <div
+        :if={@source_modal}
+        class="lens-modal-backdrop"
+        phx-window-keydown="close_source_modal"
+        phx-key="escape"
+      >
+        <div
+          class="lens-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="lens-source-modal-title"
+          phx-click-away="close_source_modal"
+        >
+          <header class="lens-modal-head">
+            <h2 id="lens-source-modal-title">Add source</h2>
+            <button
+              type="button"
+              class="ghost icon"
+              phx-click="close_source_modal"
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </header>
+          <form phx-submit="add_source" phx-change="source_form" class="lens-modal-form">
+            <div :if={@source_error} class="lens-error">{@source_error}</div>
+            <label>
+              Alias
+              <input
+                class="lens-field"
+                type="text"
+                name="alias"
+                value={@new_alias}
+                placeholder="warehouse"
+                autocomplete="off"
+                autofocus
+              />
+            </label>
+            <label>
+              Kind
+              <select class="lens-field" name="kind">
+                <option :for={kind <- Settings.kinds()} value={kind} selected={kind == @new_kind}>
+                  {kind_label(kind)}
+                </option>
+              </select>
+            </label>
+            <label>
+              {dsn_label(@new_kind)}
+              <input
+                class="lens-field"
+                type="text"
+                name="dsn"
+                value={@new_dsn}
+                placeholder={dsn_placeholder(@new_kind)}
+                autocomplete="off"
+              />
+            </label>
+            <p class="lens-muted">{dsn_hint(@new_kind)}</p>
+            <div class="lens-modal-actions">
+              <button type="button" class="ghost" phx-click="close_source_modal">Cancel</button>
+              <button type="submit">Add source</button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
     """
   end
@@ -268,17 +334,48 @@ defmodule PhoenixLensWeb.SettingsLive do
     |> assign(:user_sources, sources)
   end
 
+  defp engine_card_class(current, engine) do
+    if current == engine, do: "lens-engine-card is-active", else: "lens-engine-card"
+  end
+
   defp engine_flash("duckdb"), do: "Query engine is DuckDB. Host Postgres is attached as repo."
   defp engine_flash(_), do: "Query engine is PostgreSQL (direct)."
 
   defp status_label(%{status: :ready}), do: "ready"
-  defp status_label(%{status: :idle}), do: "idle (PostgreSQL engine selected)"
-  defp status_label(%{status: :unavailable}), do: "duckdbex missing"
+  defp status_label(%{status: :idle}), do: "idle"
+  defp status_label(%{status: :unavailable}), do: "unavailable"
   defp status_label(%{status: status}), do: to_string(status)
 
   defp source_status(%{ok?: true}), do: "attached"
   defp source_status(%{ok?: false, error: error}), do: error || "failed"
   defp source_status(_), do: "—"
+
+  defp kind_label("postgres"), do: "PostgreSQL"
+  defp kind_label("sqlite"), do: "SQLite"
+  defp kind_label("duckdb"), do: "DuckDB file"
+  defp kind_label("parquet"), do: "Parquet"
+  defp kind_label("csv"), do: "CSV"
+  defp kind_label("json"), do: "JSON"
+  defp kind_label(kind), do: kind
+
+  defp dsn_label(kind) when kind in ["parquet", "csv", "json"], do: "File path or URL"
+  defp dsn_label("postgres"), do: "Connection"
+  defp dsn_label(_), do: "File path"
+
+  defp dsn_placeholder("postgres"), do: "postgresql://user:pass@host:5432/dbname"
+  defp dsn_placeholder("sqlite"), do: "/path/to/file.sqlite"
+  defp dsn_placeholder("duckdb"), do: "/path/to/file.duckdb"
+  defp dsn_placeholder("parquet"), do: "/path/to/file.parquet"
+  defp dsn_placeholder("csv"), do: "/path/to/file.csv"
+  defp dsn_placeholder("json"), do: "/path/to/file.json"
+  defp dsn_placeholder(_), do: "/path/to/file"
+
+  defp dsn_hint("postgres"), do: "URI or host=… port=… dbname=… user=… password=…"
+
+  defp dsn_hint(kind) when kind in ["parquet", "csv", "json"],
+    do: "Local path or https:// / s3:// URL."
+
+  defp dsn_hint(_), do: "Absolute path to the file on this machine."
 
   defp user_source_status(source, attached) do
     case Enum.find(attached, &(&1.alias == source["alias"])) do
