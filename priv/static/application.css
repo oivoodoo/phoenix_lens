@@ -760,13 +760,28 @@ button.icon {
 .lens-kpi { font-size: 42px; font-weight: 900; letter-spacing: -0.03em; color: var(--text-dark); }
 .lens-kpi-block { padding: 8px 0 16px; }
 
-.lens-chart { width: 100%; height: auto; }
+.lens-chart {
+  display: block;
+  width: 100%;
+  height: 260px;
+  min-height: 240px;
+  max-width: 100%;
+}
 .lens-chart-bar { fill: var(--brand); }
-.lens-chart-line { stroke: #88bf4d; stroke-width: 2.5; }
+.lens-chart-line {
+  stroke: #3a8fd0;
+  stroke-width: 2.5;
+  fill: none;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.lens-chart-area { fill: rgba(80, 158, 227, 0.16); stroke: none; }
+.lens-chart-dot { fill: #fff; stroke: #3a8fd0; stroke-width: 2; }
+.lens-chart-grid { stroke: var(--line); stroke-width: 1; }
 .lens-chart-label { font-size: 10px; fill: var(--muted); }
 
 .lens-pie-wrap { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
-.lens-pie { width: 180px; height: 180px; }
+.lens-pie { width: 180px; height: 180px; min-width: 180px; min-height: 180px; display: block; }
 .lens-pie-hole { fill: #fff; }
 .lens-pie-total { font-size: 18px; font-weight: 900; fill: var(--text-dark); }
 .lens-pie-caption { font-size: 10px; fill: var(--muted); }

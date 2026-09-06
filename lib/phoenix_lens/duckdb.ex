@@ -168,6 +168,7 @@ defmodule PhoenixLens.DuckDB do
     [host]
     |> Enum.reject(&is_nil/1)
     |> Kernel.++(Enum.reject(extras, &MapSet.member?(used, &1.alias)))
+    |> Kernel.++(Enum.reject(env_sources(), &MapSet.member?(used, &1.alias)))
     |> Kernel.++(user)
   end
 
@@ -215,6 +216,38 @@ defmodule PhoenixLens.DuckDB do
     end)
   end
 
+  defp env_sources do
+    :phoenix_lens
+    |> Application.get_env(:duckdb_sources, [])
+    |> List.wrap()
+    |> Enum.flat_map(&normalize_env_source/1)
+  end
+
+  defp normalize_env_source(source) when is_map(source) do
+    alias_ = source[:alias] || source["alias"]
+    kind = source[:kind] || source["kind"]
+    dsn = source[:dsn] || source["dsn"] || source[:url] || source["url"]
+
+    if is_binary(alias_) and alias_ != "" and is_binary(kind) and is_binary(dsn) and dsn != "" do
+      [
+        %{
+          id: nil,
+          alias: alias_,
+          kind: to_string(kind),
+          dsn: dsn,
+          builtin?: false,
+          label: alias_,
+          error: nil,
+          ok?: nil
+        }
+      ]
+    else
+      []
+    end
+  end
+
+  defp normalize_env_source(_), do: []
+
   defp user_sources do
     Enum.map(Settings.sources(), fn source ->
       %{
@@ -230,8 +263,10 @@ defmodule PhoenixLens.DuckDB do
     end)
   end
 
-  defp attach_sql(%{kind: kind, alias: alias_, dsn: dsn}) when kind in ["postgres", "sqlite"] do
-    "ATTACH #{sql_string(dsn)} AS #{quote_ident(alias_)} (TYPE #{kind}, READ_ONLY)"
+  defp attach_sql(%{kind: kind, alias: alias_, dsn: dsn} = source)
+       when kind in ["postgres", "mysql", "sqlite"] do
+    mode = if Map.get(source, :read_only, true) == false, do: "", else: ", READ_ONLY"
+    "ATTACH #{sql_string(typed_dsn(kind, dsn))} AS #{quote_ident(alias_)} (TYPE #{kind}#{mode})"
   end
 
   defp attach_sql(%{kind: "duckdb", alias: alias_, dsn: dsn}) do
@@ -254,7 +289,9 @@ defmodule PhoenixLens.DuckDB do
     extensions =
       case kind do
         "postgres" -> ["postgres"]
+        "mysql" -> ["mysql"]
         "sqlite" -> ["sqlite"]
+        "json" -> ["json"]
         _ -> []
       end
 
@@ -318,6 +355,72 @@ defmodule PhoenixLens.DuckDB do
 
   def sql_string(value) do
     "'" <> String.replace(to_string(value), "'", "''") <> "'"
+  end
+
+  defp typed_dsn("mysql", dsn), do: mysql_dsn(dsn)
+  defp typed_dsn(_kind, dsn), do: dsn
+
+  defp mysql_dsn(nil), do: ""
+
+  defp mysql_dsn(dsn) when is_binary(dsn) do
+    cond do
+      String.starts_with?(dsn, "mysql://") ->
+        mysql_url_to_conninfo(dsn)
+
+      String.starts_with?(dsn, "mysql2://") ->
+        mysql_url_to_conninfo("mysql://" <> String.replace_prefix(dsn, "mysql2://", ""))
+
+      true ->
+        dsn
+    end
+  end
+
+  defp mysql_url_to_conninfo(url) do
+    uri = URI.parse(url)
+    {user, password} = mysql_userinfo(uri)
+    database = mysql_database(uri.path)
+
+    [
+      conninfo_pair("host", uri.host || "127.0.0.1"),
+      conninfo_pair("port", uri.port || 3306),
+      conninfo_pair("user", user),
+      conninfo_pair("password", password),
+      conninfo_pair("database", database)
+    ]
+    |> Enum.reject(&is_nil/1)
+    |> Enum.join(" ")
+  end
+
+  defp mysql_userinfo(%URI{userinfo: nil}), do: {nil, nil}
+
+  defp mysql_userinfo(%URI{userinfo: userinfo}) do
+    case String.split(userinfo, ":", parts: 2) do
+      [user] -> {URI.decode(user), nil}
+      [user, password] -> {URI.decode(user), URI.decode(password)}
+    end
+  end
+
+  defp mysql_database(nil), do: nil
+  defp mysql_database("/"), do: nil
+  defp mysql_database("/" <> name), do: URI.decode(name)
+  defp mysql_database(name), do: name
+
+  defp conninfo_pair(_key, nil), do: nil
+  defp conninfo_pair(_key, ""), do: nil
+
+  defp conninfo_pair(key, value) do
+    value = to_string(value)
+
+    if Regex.match?(~r/[\s'\\]/, value) do
+      escaped =
+        value
+        |> String.replace("\\", "\\\\")
+        |> String.replace("'", "\\'")
+
+      "#{key}='#{escaped}'"
+    else
+      "#{key}=#{value}"
+    end
   end
 
   defp maybe_record_error(%{id: id}, message) when is_integer(id) do

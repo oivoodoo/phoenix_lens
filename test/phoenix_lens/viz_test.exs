@@ -42,9 +42,42 @@ defmodule PhoenixLens.VizTest do
     assert page.pages == 3
   end
 
-  test "defaults X to first non-numeric column and Y to count when no metric" do
-    assert Viz.default_x(posts()) == "title"
+  test "defaults X to a low-cardinality category and Y to count when no metric" do
+    assert Viz.default_x(posts()) in ["category", "status"]
     assert Viz.default_y(posts()) == "__count__"
+  end
+
+  test "line charts prefer a time column for X" do
+    result = %Result{
+      columns: ["body", "inserted_at", "n"],
+      rows: [
+        ["hello", ~U[2026-01-01 00:00:00Z], 3],
+        ["hi", ~U[2026-01-02 00:00:00Z], 5]
+      ],
+      masked_columns: [],
+      num_rows: 2
+    }
+
+    assert Viz.default_x(result, "line") == "inserted_at"
+    assert Viz.default_y(result, "line") == "n"
+  end
+
+  test "falls back to count when Y is not numeric" do
+    pairs = Viz.series(posts(), "category", "title")
+    assert {"ops", 2.0} in pairs
+  end
+
+  test "skips masked columns as Y" do
+    result = %Result{
+      columns: ["id", "body", "author_email"],
+      rows: [[1, "hi", :redacted], [2, "yo", :redacted]],
+      masked_columns: ["author_email"],
+      num_rows: 2
+    }
+
+    {_x, y} = Viz.coerce_axes(result, "body", "author_email", "line")
+    assert y == "__count__"
+    assert Viz.series(result, "body", y) != []
   end
 
   test "defaults Y to first numeric column" do

@@ -12,3 +12,18 @@ services:
       interval: 2s
       timeout: 5s
       retries: 20
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql
+      MYSQL_DATABASE: lens_test
+      MYSQL_USER: lens
+      MYSQL_PASSWORD: mysql
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-umysql", "-pmysql"]
+      interval: 3s
+      timeout: 5s
+      retries: 30

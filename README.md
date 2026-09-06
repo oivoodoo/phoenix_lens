@@ -49,6 +49,15 @@ Default queries go straight to PostgreSQL. In `/lens/settings` you can switch th
 
 Host tables stay queryable as `users` or `repo.users`. Extra databases are `alias.table`. File sources become a view named after the alias.
 
+Join across sources in one question, for example Postgres + MySQL + a remote CSV:
+
+```sql
+SELECT u.id, b.sku, p.plan
+FROM repo.users u
+JOIN billing.orders b ON b.user_id = u.id
+JOIN plans p ON p.user_id = u.id
+```
+
 DuckDB is optional. Add the NIF to the **host** app (the dummy app already does):
 
 ```elixir

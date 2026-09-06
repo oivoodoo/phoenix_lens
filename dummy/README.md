@@ -12,7 +12,7 @@ mix setup
 mix phx.server
 ```
 
-Postgres is published on **5556** (host) → 5432 (container). 5432 and 5555 are already taken on this machine.
+Postgres is published on **5556** (host) → 5432 (container). Optional MySQL is on **3307** (`MYSQL_URL=mysql://lens:mysql@127.0.0.1:3307/lens_test`).
 
 Then open:
 

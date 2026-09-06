@@ -59,10 +59,10 @@ defmodule PhoenixLensWeb.Components.ResultTable do
   attr :page_info, :map, default: nil
 
   def visualization(assigns) do
-    x = assigns[:x] || Viz.default_x(assigns.result)
-    y = assigns[:y] || Viz.default_y(assigns.result)
+    viz = assigns[:viz] || "table"
+    {x, y} = Viz.coerce_axes(assigns.result, assigns[:x], assigns[:y], viz)
     pairs = Viz.series(assigns.result, x, y)
-    assigns = assign(assigns, pairs: pairs, x: x, y: y)
+    assigns = assign(assigns, pairs: pairs, x: x, y: y, viz: viz)
 
     ~H"""
     <%= case @viz do %>
@@ -73,7 +73,7 @@ defmodule PhoenixLensWeb.Components.ResultTable do
       <% "line" -> %>
         <.column_chart result={@result} pairs={@pairs} line={true} />
       <% "combo" -> %>
-        <.column_chart result={@result} pairs={@pairs} line={true} />
+        <.column_chart result={@result} pairs={@pairs} combo={true} />
       <% "pie" -> %>
         <.pie result={@result} pairs={@pairs} />
       <% _ -> %>
@@ -100,27 +100,52 @@ defmodule PhoenixLensWeb.Components.ResultTable do
   attr :result, :map, required: true
   attr :pairs, :list, default: []
   attr :line, :boolean, default: false
+  attr :combo, :boolean, default: false
 
   def column_chart(assigns) do
     pairs = assigns[:pairs] || []
     max_v = pairs |> Enum.map(&elem(&1, 1)) |> Enum.max(fn -> 1 end) |> max(1)
-    w = 640
-    h = 220
+    w = 720
+    h = 260
+    pad_l = 44
+    pad_r = 16
+    pad_t = 16
+    pad_b = 36
+    plot_w = w - pad_l - pad_r
+    plot_h = h - pad_t - pad_b
     n = max(length(pairs), 1)
-    gap = 12
-    bar_w = max(trunc((w - 40) / n - gap), 8)
+    gap = if n > 16, do: 4, else: 10
+    bar_w = max(trunc(plot_w / n - gap), 6)
+    show_line = assigns[:line] == true or assigns[:combo] == true
+    show_bars = assigns[:combo] == true or not show_line
 
     points =
       pairs
       |> Enum.with_index()
       |> Enum.map(fn {{_label, value}, i} ->
-        x = 28 + i * (bar_w + gap) + bar_w / 2
-        y = 12 + (1 - value / max_v) * 170
-        {x, y}
+        x = pad_l + i * (bar_w + gap) + bar_w / 2
+        y = pad_t + (1 - value / max_v) * plot_h
+        {x, y, value}
       end)
 
-    polyline =
-      Enum.map_join(points, " ", fn {x, y} -> "#{x},#{y}" end)
+    polyline = Enum.map_join(points, " ", fn {x, y, _} -> "#{x},#{y}" end)
+
+    area =
+      case points do
+        [] ->
+          ""
+
+        [{x0, _, _} | _] = pts ->
+          {xn, _, _} = List.last(pts)
+          top = Enum.map_join(pts, " ", fn {x, y, _} -> "#{x},#{y}" end)
+          "M #{x0},#{pad_t + plot_h} L #{top} L #{xn},#{pad_t + plot_h} Z"
+      end
+
+    grid =
+      Enum.map([0.0, 0.25, 0.5, 0.75, 1.0], fn t ->
+        y = pad_t + (1 - t) * plot_h
+        {y, max_v * t}
+      end)
 
     assigns =
       assign(assigns,
@@ -128,35 +153,73 @@ defmodule PhoenixLensWeb.Components.ResultTable do
         max_v: max_v,
         w: w,
         h: h,
+        pad_l: pad_l,
+        pad_t: pad_t,
+        plot_h: plot_h,
         bar_w: bar_w,
         gap: gap,
-        polyline: polyline
+        polyline: polyline,
+        area: area,
+        points: points,
+        grid: grid,
+        show_line: show_line,
+        show_bars: show_bars
       )
 
     ~H"""
     <%= if @pairs == [] do %>
-      <p class="lens-empty">This chart needs a category on X and a number (or Count of rows) on Y.</p>
+      <p class="lens-empty">No numeric values to plot. Pick Count of rows or a numeric Y column.</p>
     <% else %>
-      <svg class="lens-chart" viewBox={"0 0 #{@w} #{@h}"} role="img">
-        <%= for {{label, value}, i} <- Enum.with_index(@pairs) do %>
+      <svg
+        class="lens-chart"
+        viewBox={"0 0 #{@w} #{@h}"}
+        width="100%"
+        height="260"
+        role="img"
+        aria-label="chart"
+      >
+        <line
+          :for={{y, _v} <- @grid}
+          x1={@pad_l}
+          y1={y}
+          x2={@w - 16}
+          y2={y}
+          class="lens-chart-grid"
+        />
+        <text
+          :for={{y, v} <- @grid}
+          x={@pad_l - 6}
+          y={y + 3}
+          text-anchor="end"
+          class="lens-chart-label"
+        >
+          {format_num(v)}
+        </text>
+        <%= if @show_bars do %>
           <rect
-            x={28 + i * (@bar_w + @gap)}
-            y={12 + (1 - value / @max_v) * 170}
+            :for={{{_label, value}, i} <- Enum.with_index(@pairs)}
+            x={@pad_l + i * (@bar_w + @gap)}
+            y={@pad_t + (1 - value / @max_v) * @plot_h}
             width={@bar_w}
-            height={max(value / @max_v * 170, 1)}
+            height={max(value / @max_v * @plot_h, 2)}
             rx="3"
             class="lens-chart-bar"
           />
-          <text
-            x={28 + i * (@bar_w + @gap) + @bar_w / 2}
-            y="210"
-            text-anchor="middle"
-            class="lens-chart-label"
-          >
-            {short(label)}
-          </text>
         <% end %>
-        <polyline :if={@line} points={@polyline} class="lens-chart-line" fill="none" />
+        <%= if @show_line do %>
+          <path d={@area} class="lens-chart-area" />
+          <polyline points={@polyline} class="lens-chart-line" fill="none" />
+          <circle :for={{x, y, _} <- @points} cx={x} cy={y} r="3.5" class="lens-chart-dot" />
+        <% end %>
+        <text
+          :for={{{label, _value}, i} <- Enum.with_index(@pairs)}
+          x={@pad_l + i * (@bar_w + @gap) + @bar_w / 2}
+          y={@h - 12}
+          text-anchor="middle"
+          class="lens-chart-label"
+        >
+          {short(label)}
+        </text>
       </svg>
     <% end %>
     """

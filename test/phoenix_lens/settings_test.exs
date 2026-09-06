@@ -15,6 +15,17 @@ defmodule PhoenixLens.SettingsTest do
     assert source.kind == "postgres"
   end
 
+  test "normalize_source accepts mysql" do
+    assert {:ok, source} =
+             Settings.normalize_source(%{
+               alias: "billing",
+               kind: "mysql",
+               dsn: "mysql://lens:mysql@127.0.0.1:3307/lens_test"
+             })
+
+    assert source.kind == "mysql"
+  end
+
   test "normalize_source rejects reserved aliases" do
     assert {:error, %{message: message}} =
              Settings.normalize_source(%{alias: "repo", kind: "postgres", dsn: "x"})

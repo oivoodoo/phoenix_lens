@@ -35,11 +35,15 @@ defmodule PhoenixLens.Query do
   end
 
   defp require_db(nil) do
-    {:error,
-     %Error{
-       message: "PhoenixLens is not configured. Set config :phoenix_lens, repo: MyApp.Repo",
-       kind: :config
-     }}
+    if Settings.engine() == :duckdb do
+      {:ok, %{id: "primary"}}
+    else
+      {:error,
+       %Error{
+         message: "PhoenixLens is not configured. Set config :phoenix_lens, repo: MyApp.Repo",
+         kind: :config
+       }}
+    end
   end
 
   defp require_db(db), do: {:ok, db}

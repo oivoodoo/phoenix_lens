@@ -6,7 +6,7 @@ defmodule PhoenixLens.Settings do
   alias PhoenixLens.{Config, DuckDB, Error}
 
   @engines ~w(postgresql duckdb)
-  @kinds ~w(postgres sqlite duckdb parquet csv json)
+  @kinds ~w(postgres mysql sqlite duckdb parquet csv json)
   @reserved ~w(
     memory repo main postgres information_schema pg_catalog temp system
     duckdb default primary catalog sys
@@ -17,12 +17,11 @@ defmodule PhoenixLens.Settings do
   def kinds, do: @kinds
 
   def engine do
-    ensure_tables()
-    cached = read_engine()
-    :persistent_term.put(@engine_key, cached)
-    cached
+    engine = persisted_engine() || app_engine() || :postgresql
+    :persistent_term.put(@engine_key, engine)
+    engine
   rescue
-    _ -> :persistent_term.get(@engine_key, :postgresql)
+    _ -> app_engine() || :persistent_term.get(@engine_key, :postgresql)
   end
 
   def duckdb? do
@@ -30,14 +29,7 @@ defmodule PhoenixLens.Settings do
   end
 
   def warmup do
-    ensure_tables()
-    cached = read_engine()
-    :persistent_term.put(@engine_key, cached)
-    cached
-  rescue
-    _ ->
-      :persistent_term.put(@engine_key, :postgresql)
-      :postgresql
+    engine()
   end
 
   def put_engine(engine) do
@@ -248,10 +240,22 @@ defmodule PhoenixLens.Settings do
     """
   end
 
-  defp read_engine do
+  defp persisted_engine do
+    ensure_tables()
+
     case query_maps("SELECT engine FROM phoenix_lens_settings WHERE id = 1") do
       [%{"engine" => engine}] when engine in @engines -> String.to_existing_atom(engine)
-      _ -> :postgresql
+      _ -> nil
+    end
+  rescue
+    _ -> nil
+  end
+
+  defp app_engine do
+    case Application.get_env(:phoenix_lens, :engine) do
+      engine when engine in [:postgresql, :duckdb] -> engine
+      engine when engine in ["postgresql", "duckdb"] -> String.to_existing_atom(engine)
+      _ -> nil
     end
   end
 

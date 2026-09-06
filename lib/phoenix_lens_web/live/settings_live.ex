@@ -351,6 +351,7 @@ defmodule PhoenixLensWeb.SettingsLive do
   defp source_status(_), do: "—"
 
   defp kind_label("postgres"), do: "PostgreSQL"
+  defp kind_label("mysql"), do: "MySQL"
   defp kind_label("sqlite"), do: "SQLite"
   defp kind_label("duckdb"), do: "DuckDB file"
   defp kind_label("parquet"), do: "Parquet"
@@ -359,10 +360,11 @@ defmodule PhoenixLensWeb.SettingsLive do
   defp kind_label(kind), do: kind
 
   defp dsn_label(kind) when kind in ["parquet", "csv", "json"], do: "File path or URL"
-  defp dsn_label("postgres"), do: "Connection"
+  defp dsn_label(kind) when kind in ["postgres", "mysql"], do: "Connection"
   defp dsn_label(_), do: "File path"
 
   defp dsn_placeholder("postgres"), do: "postgresql://user:pass@host:5432/dbname"
+  defp dsn_placeholder("mysql"), do: "mysql://user:pass@host:3306/dbname"
   defp dsn_placeholder("sqlite"), do: "/path/to/file.sqlite"
   defp dsn_placeholder("duckdb"), do: "/path/to/file.duckdb"
   defp dsn_placeholder("parquet"), do: "/path/to/file.parquet"
@@ -371,6 +373,9 @@ defmodule PhoenixLensWeb.SettingsLive do
   defp dsn_placeholder(_), do: "/path/to/file"
 
   defp dsn_hint("postgres"), do: "URI or host=… port=… dbname=… user=… password=…"
+
+  defp dsn_hint("mysql"),
+    do: "mysql://user:pass@host:3306/dbname or host=… user=… password=… port=3306 database=…"
 
   defp dsn_hint(kind) when kind in ["parquet", "csv", "json"],
     do: "Local path or https:// / s3:// URL."

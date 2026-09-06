@@ -27,12 +27,15 @@ defmodule PhoenixLensWeb.ResultPreview do
 
     socket =
       if reset? and result do
+        viz = assigns[:viz] || "table"
+        {x, y} = Viz.coerce_axes(result, nil, nil, viz)
+
         socket
-        |> assign(:viz, assigns[:viz] || "table")
+        |> assign(:viz, viz)
         |> assign(:page, 1)
         |> assign(:page_size, Viz.page_size())
-        |> assign(:x, Viz.default_x(result))
-        |> assign(:y, Viz.default_y(result))
+        |> assign(:x, x)
+        |> assign(:y, y)
       else
         assign_new(socket, :page, fn -> 1 end)
         |> assign_new(:page_size, fn -> Viz.page_size() end)
@@ -45,11 +48,14 @@ defmodule PhoenixLensWeb.ResultPreview do
   end
 
   def handle_event("set_viz", %{"viz" => viz}, socket) do
+    result = socket.assigns.result
+    {x, y} = Viz.coerce_axes(result, socket.assigns[:x], socket.assigns[:y], viz)
     send(self(), {:preview_viz, viz})
-    {:noreply, assign(socket, viz: viz, page: 1)}
+    {:noreply, assign(socket, viz: viz, x: x, y: y, page: 1)}
   end
 
   def handle_event("set_axis", %{"x" => x, "y" => y}, socket) do
+    {x, y} = Viz.coerce_axes(socket.assigns.result, x, y, socket.assigns.viz)
     {:noreply, assign(socket, x: x, y: y)}
   end
 
@@ -139,7 +145,13 @@ defmodule PhoenixLensWeb.ResultPreview do
           Y axis
           <select name="y">
             <option value="__count__" selected={@y == "__count__"}>Count of rows</option>
-            <option :for={col <- @result.columns} value={col} selected={col == @y}>{col}</option>
+            <option
+              :for={col <- Viz.numeric_columns(@result)}
+              value={col}
+              selected={col == @y}
+            >
+              {col}
+            </option>
           </select>
         </label>
       </form>
