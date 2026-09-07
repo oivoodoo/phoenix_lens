@@ -37,12 +37,17 @@ defmodule PhoenixLensWeb.Router do
 
         get "/assets/:file", PhoenixLensWeb.AssetController, :show
         get "/questions/:id/csv", PhoenixLensWeb.CSVController, :show
+        get "/unlock/complete", PhoenixLensWeb.UnlockController, :complete
+        post "/mcp", PhoenixLensWeb.Plugs.MCP, :rpc
+        get "/mcp", PhoenixLensWeb.Plugs.MCP, :sse
+        options "/mcp", PhoenixLensWeb.Plugs.MCP, :options
 
         live_session session_name,
           on_mount: PhoenixLensWeb.Hooks,
           session: {PhoenixLensWeb.Plugs.Dashboard, :session, []},
           root_layout: {PhoenixLensWeb.Layouts, :root} do
           live "/", PhoenixLensWeb.HomeLive, :index
+          live "/unlock", PhoenixLensWeb.UnlockLive, :index
           live "/ask", PhoenixLensWeb.AskLive, :index
           live "/catalog", PhoenixLensWeb.CatalogLive, :index
           live "/questions", PhoenixLensWeb.QuestionLive, :index
@@ -52,6 +57,9 @@ defmodule PhoenixLensWeb.Router do
           live "/audit", PhoenixLensWeb.AuditLive, :index
           live "/settings", PhoenixLensWeb.SettingsLive, :index
           live "/settings/protection", PhoenixLensWeb.ProtectionLive, :index
+          live "/settings/mcp", PhoenixLensWeb.MCPLive, :index
+          live "/settings/integrations", PhoenixLensWeb.IntegrationsLive, :index
+          live "/settings/security", PhoenixLensWeb.SecurityLive, :index
         end
       end
     end

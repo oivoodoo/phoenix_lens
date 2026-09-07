@@ -21,6 +21,8 @@ defmodule PhoenixLens.Standalone.Endpoint do
     pass: ["*/*"],
     json_decoder: Phoenix.json_library()
 
+  plug PhoenixLensWeb.Plugs.MCP, path: "/lens/mcp"
+
   plug Plug.MethodOverride
   plug Plug.Head
   plug Plug.Session, @session_options

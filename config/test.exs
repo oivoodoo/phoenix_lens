@@ -2,6 +2,7 @@ import Config
 
 config :phoenix, :plug_init_mode, :runtime
 config :logger, level: :warning
+config :phoenix_lens, start_alerts: false
 
 config :phoenix_lens, PhoenixLens.TestEndpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],

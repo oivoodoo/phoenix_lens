@@ -20,6 +20,10 @@ defmodule PhoenixLens.Redactor do
 
   def actor(nil), do: "anonymous"
 
+  def actor(%{id: id, kind: :mcp}) do
+    "mcp:#{id}"
+  end
+
   def actor(%{id: id}) do
     "user:#{id}"
   end

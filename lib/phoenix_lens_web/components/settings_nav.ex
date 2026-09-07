@@ -20,6 +20,24 @@ defmodule PhoenixLensWeb.Components.SettingsNav do
       >
         Column protection
       </a>
+      <a
+        href={"#{@lens_prefix}/settings/mcp"}
+        class={if @section == :mcp, do: "active"}
+      >
+        MCP
+      </a>
+      <a
+        href={"#{@lens_prefix}/settings/integrations"}
+        class={if @section == :integrations, do: "active"}
+      >
+        Integrations
+      </a>
+      <a
+        href={"#{@lens_prefix}/settings/security"}
+        class={if @section == :security, do: "active"}
+      >
+        Security
+      </a>
     </nav>
     """
   end

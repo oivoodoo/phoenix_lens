@@ -277,6 +277,10 @@ defmodule PhoenixLens.Settings do
         repo.query!(settings_alter_sql(), [], log: false)
         repo.query!(sources_sql(), [], log: false)
         PhoenixLens.Protection.ensure_table()
+        PhoenixLens.Tokens.ensure_table()
+        PhoenixLens.Integrations.ensure_table()
+        PhoenixLens.Alerts.ensure_table()
+        PhoenixLens.Auth.ensure_tables()
         :ok
     end
   rescue

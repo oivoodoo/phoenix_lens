@@ -66,4 +66,36 @@ defmodule PhoenixLensWeb.RouterMacroTest do
     assert PhoenixLensWeb.Plugs.Dashboard.prefix_from_conn(conn, "/lens") ==
              "/dev/internal/lens"
   end
+
+  test "unlock complete consumes a ticket into the session" do
+    Application.put_env(:phoenix_lens, :repo, Foo.Repo)
+    ticket = PhoenixLens.Auth.issue_unlock_ticket(to: "/lens")
+
+    conn =
+      Phoenix.ConnTest.build_conn()
+      |> Phoenix.ConnTest.dispatch(
+        PhoenixLens.TestEndpoint,
+        :get,
+        "/lens/unlock/complete?t=#{ticket}"
+      )
+
+    assert conn.status == 302
+    assert {"location", "/lens"} in conn.resp_headers
+    assert Plug.Conn.get_session(conn, :lens_unlocked) == true
+  end
+
+  test "unlock complete rejects a missing ticket" do
+    Application.put_env(:phoenix_lens, :repo, Foo.Repo)
+
+    conn =
+      Phoenix.ConnTest.build_conn()
+      |> Phoenix.ConnTest.dispatch(
+        PhoenixLens.TestEndpoint,
+        :get,
+        "/lens/unlock/complete?t=nope"
+      )
+
+    assert conn.status == 302
+    assert {"location", "/lens/unlock"} in conn.resp_headers
+  end
 end

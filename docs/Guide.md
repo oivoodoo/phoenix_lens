@@ -2,11 +2,11 @@
 
 Lens is a mountable Phoenix LiveView SQL notebook pointed at the host Ecto Repo. It is the PgHero-shaped tool you mount at `/lens`: ask a question, save it, pin it to a dashboard, and **mask PII/PHI in every output**.
 
-It is not Metabase. There is no sidecar JVM and no god-mode warehouse user. Queries are `SELECT` / `WITH` (optional `EXPLAIN`) only. Field policy runs on the grid, CSV, JSON, embeds, and the audit log.
+It is not Metabase. There is no sidecar JVM and no god-mode warehouse user. Queries are `SELECT` / `WITH` (optional `EXPLAIN`) only. Field policy runs on the grid, CSV, JSON, embeds, MCP tool results, and the audit log.
 
-This page is a tour of the product as it looks in the dummy app (`dummy/` on [http://localhost:4000/lens](http://localhost:4000/lens)), plus how queries are designed for **PostgreSQL** (default) and **DuckDB** (optional).
+This page is a tour of the product as it looks in the dummy app (`dummy/` on [http://localhost:4000/lens](http://localhost:4000/lens)), plus how queries are designed for **PostgreSQL** (default) and **DuckDB** (optional). Agents can drive the same notebook over **MCP** at `/lens/mcp`.
 
-Install and auth: [Phoenix.md](Phoenix.md). Threat model: [Policy.md](Policy.md). Host pipeline as permissions: [Permissions.md](Permissions.md).
+Install and auth: [Phoenix.md](Phoenix.md). MCP server: [MCP.md](MCP.md). Threat model: [Policy.md](Policy.md). Host pipeline as permissions: [Permissions.md](Permissions.md).
 
 This library is **not** HIPAA or GDPR certified. You are the operator.
 
@@ -152,6 +152,32 @@ Query extras as `alias.table` (or the alias itself for files). DSNs are redacted
 
 Locked chips cannot be removed from the UI; change `masked_fields` or the schema instead.
 
+### MCP
+
+![Settings → MCP: project tokens for the agent endpoint](images/settings-mcp.png)
+
+**Settings → MCP** (`/lens/settings/mcp`) issues project tokens for the Streamable HTTP MCP server at `/lens/mcp`. Each token has a public **token id** (`plt_…`) and a **secret** (`lns_…`) shown once. Clients send `Authorization: Bearer <secret>`.
+
+Tools cover the same surfaces as the UI (catalog, SQL, questions, dashboards, audit, engines, sources, column protection). Field policy still masks cells as `[redacted]`. Creating and revoking tokens is UI-only. Setup and the tool list: [MCP.md](MCP.md).
+
+### Integrations and alerts
+
+![Settings → Integrations: SMTP and a named webhook](images/settings-integrations.png)
+
+**Settings → Integrations** configures SMTP and named webhooks. On a saved question, **Alert** sends email or a JSON POST when the question returns rows, returns none, or crosses a numeric goal. Masked cells stay `[redacted]`. Details: [Alerts.md](Alerts.md).
+
+![Create an alert on a saved question](images/question-alert.png)
+
+### Security
+
+![Settings → Security: authenticator app and passkeys](images/settings-security.png)
+
+**Settings → Security** (`/lens/settings/security`) is optional. Enable an authenticator app (Google Authenticator, 1Password, Authy, …) and/or register a passkey (Touch ID, Face ID, Windows Hello, security key). After either is on, visitors must unlock at `/lens/unlock` before the notebook. MCP tokens skip this step. Host pipeline auth is still required. Locked out: `PhoenixLens.Auth.reset!()` in IEx.
+
+![Authenticator setup: scan the QR, then confirm a 6-digit code](images/settings-security-totp.png)
+
+Details: [Phoenix.md](Phoenix.md), [Permissions.md](Permissions.md).
+
 ## Query design
 
 Every notebook click and every **Run** lands in `PhoenixLens.Query.run/2`. There is no public unmasked path.
@@ -178,6 +204,7 @@ Every notebook click and every **Run** lands in `PhoenixLens.Query.run/2`. There
           ├── grid / charts
           ├── CSV / JSON export
           ├── QuestionCard embed
+          ├── MCP tools/call
           └── Audit.record (SQL redacted, no cells)
 ```
 
@@ -296,11 +323,32 @@ Postgres is on host port **5556** (`dummy_dev`). Open [http://localhost:4000/len
 
 The dummy app depends on `{:phoenix_lens, path: ".."}` and `{:duckdbex, "~> 0.4"}`. After beam, CSS, or JS changes, restart `mix phx.server` so `/lens/assets` is not an old build.
 
+## MCP
+
+The dummy app already mounts `PhoenixLensWeb.Plugs.MCP` at `/lens/mcp`. Generate a token in Settings, then point an MCP client at that URL.
+
+```json
+{
+  "mcpServers": {
+    "phoenix-lens": {
+      "url": "http://localhost:4000/lens/mcp",
+      "headers": {
+        "Authorization": "Bearer lns_…"
+      }
+    }
+  }
+}
+```
+
+`run_sql` is still SELECT/WITH only. Audit actor is `mcp:<token_id>`. Host mount and the full tool list: [MCP.md](MCP.md).
+
 ## Related
 
 - [Phoenix.md](Phoenix.md) — install, mount, auth, multi-db, embed
+- [MCP.md](MCP.md) — MCP server, project tokens, tools
+- [Alerts.md](Alerts.md) — email and webhook alerts
 - [Policy.md](Policy.md) — what is protected, known limits
-- [Permissions.md](Permissions.md) — host pipeline is the permission model
+- [Permissions.md](Permissions.md) — host pipeline is the permission model; optional 2FA / passkeys
 - [ADR-001](001-in-process-not-a-metabase-clone.md) — in-process, not a clone
 - [ADR-002](002-field-policy-on-every-sink.md) — policy on every sink
 - [ADR-003](003-postgres-read-replica-timeout.md) — replica, timeout, row cap

@@ -2,6 +2,10 @@ import Config
 
 config :phoenix, :json_library, Jason
 
+config :wax_,
+  origin: "http://localhost:4000",
+  rp_id: :auto
+
 config :phoenix_lens, :standalone, false
 
 config :phoenix_lens, PhoenixLens.Standalone.Endpoint,

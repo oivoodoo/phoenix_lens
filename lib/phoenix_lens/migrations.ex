@@ -72,11 +72,21 @@ defmodule PhoenixLens.Migrations do
     Ecto.Migration.execute(PhoenixLens.Settings.settings_alter_sql())
     Ecto.Migration.execute(PhoenixLens.Settings.sources_sql())
     Ecto.Migration.execute(PhoenixLens.Protection.table_sql())
+    Ecto.Migration.execute(PhoenixLens.Tokens.table_sql())
+    Ecto.Migration.execute(PhoenixLens.Integrations.table_sql())
+    Ecto.Migration.execute(PhoenixLens.Alerts.table_sql())
+    Ecto.Migration.execute(PhoenixLens.Auth.auth_sql())
+    Ecto.Migration.execute(PhoenixLens.Auth.passkeys_sql())
 
     :ok
   end
 
   def down do
+    Ecto.Migration.execute("DROP TABLE IF EXISTS phoenix_lens_passkeys")
+    Ecto.Migration.execute("DROP TABLE IF EXISTS phoenix_lens_auth")
+    Ecto.Migration.execute("DROP TABLE IF EXISTS phoenix_lens_alerts")
+    Ecto.Migration.execute("DROP TABLE IF EXISTS phoenix_lens_integrations")
+    Ecto.Migration.execute("DROP TABLE IF EXISTS phoenix_lens_tokens")
     Ecto.Migration.execute("DROP TABLE IF EXISTS phoenix_lens_protections")
     Ecto.Migration.execute("DROP TABLE IF EXISTS phoenix_lens_sources")
     Ecto.Migration.execute("DROP TABLE IF EXISTS phoenix_lens_settings")

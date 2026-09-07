@@ -7,7 +7,7 @@ Add PhoenixLens to `mix.exs`:
 ```elixir
 def deps do
   [
-    {:phoenix_lens, "~> 0.1.2"}
+    {:phoenix_lens, "~> 0.1.3"}
   ]
 end
 ```
@@ -44,7 +44,7 @@ defmodule MyApp.Repo.Migrations.AddPhoenixLens do
 end
 ```
 
-Then open `/lens`. Screenshots and query-engine details: [Guide.md](Guide.md).
+Then open `/lens`. Screenshots and query-engine details: [Guide.md](Guide.md). MCP server: [MCP.md](MCP.md).
 
 The SQL editor autocompletes tables and columns from Ecto schemas (and `information_schema` when a repo is configured). Type after `FROM` / `JOIN` for tables, `users.` for that table’s columns, or a prefix in `SELECT` / `WHERE`. Tab or Enter inserts. Protected columns are labelled redacted.
 
@@ -66,6 +66,16 @@ config :phoenix_lens,
 
 **Do not expose this dashboard on the public internet without auth.**
 
+**Settings → Security** can add an extra UI lock: TOTP from an authenticator app, and/or passkeys. When either is enabled, `/lens` redirects to `/lens/unlock` until the session is unlocked. MCP requests are not gated by this lock. It is not a replacement for the host pipeline.
+
+If you lock yourself out:
+
+```elixir
+iex> PhoenixLens.Auth.reset!()
+```
+
+Passkeys use WebAuthn against the page origin (`http://localhost:4000` in the dummy app). HTTPS is required everywhere except localhost.
+
 ## Multiple databases
 
 ```elixir
@@ -80,6 +90,27 @@ config :phoenix_lens,
 Questions, dashboards, settings, and the audit log always persist on `repo:`. Point the query target at a **read replica** when you can. Audit is paginated; Settings sets how long rows are kept (7–365 days, or forever). Default is 90 days.
 
 **Column protection** (`/lens/settings/protection`) adds runtime masks on top of `masked_fields` and Ecto `redact: true`: globally, per database/source, or per table.
+
+**MCP** (`/lens/settings/mcp`) issues project tokens for the agent endpoint. See below.
+
+## MCP
+
+After `Plug.Parsers` in the host endpoint, mount the MCP server so agents can use the same notebook behind a project token:
+
+```elixir
+plug PhoenixLensWeb.Plugs.MCP, path: "/lens/mcp"
+```
+
+Issue tokens in **Settings → MCP**. Clients POST JSON-RPC to `{mount}/mcp` with `Authorization: Bearer <secret>`. Field policy still applies. Full tool list: [MCP.md](MCP.md). Product tour: [Guide.md](Guide.md).
+
+## Alerts
+
+**Settings → Integrations** stores SMTP and named webhook URLs. On a saved question, **Alert** checks the question on a schedule (1m–daily) and emails or POSTs JSON when:
+
+- it returns any rows (or no rows)
+- a numeric value goes above or below a goal
+
+Optional `{:gen_smtp, "~> 1.2"}` for outbound mail. Webhooks use `:httpc`. See [Alerts.md](Alerts.md).
 
 ## DuckDB engine
 

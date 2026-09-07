@@ -23,7 +23,7 @@ A column is masked when:
 - the origin identifier is protected (`SELECT email AS contact`), or
 - it is a computed expression whose SELECT item contains a protected identifier (`first_name || last_name`)
 
-Masked cells are the atom `:redacted`, rendered `[redacted]`, including CSV, embeds, and the audit viewer.
+Masked cells are the atom `:redacted`, rendered `[redacted]`, including CSV, embeds, the audit viewer, **MCP tool results**, and **alert email/webhook payloads**.
 
 `WHERE email = ...` is allowed. Quoted email/phone literals are redacted in stored SQL and in the audit log.
 

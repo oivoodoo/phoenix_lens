@@ -35,6 +35,7 @@ defmodule Dummy.MixProject do
       {:bandit, "~> 1.5"},
       {:jason, "~> 1.4"},
       {:duckdbex, "~> 0.4"},
+      {:gen_smtp, "~> 1.2"},
       {:phoenix_lens, path: ".."}
     ]
   end

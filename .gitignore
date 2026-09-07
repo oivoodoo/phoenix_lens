@@ -11,3 +11,4 @@ dummy/_build/
 dummy/deps/
 dummy/.elixir_ls/
 .elixir_ls/
+.DS_Store

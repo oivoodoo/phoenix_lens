@@ -19,6 +19,7 @@ defmodule PhoenixLens.Application do
     children =
       connection_children() ++
         [{PhoenixLens.DuckDB.Server, []}] ++
+        alert_children() ++
         PhoenixLens.Standalone.children()
 
     opts = [strategy: :one_for_one, name: PhoenixLens.Supervisor]
@@ -28,6 +29,14 @@ defmodule PhoenixLens.Application do
   defp connection_children do
     if Application.get_env(:phoenix_lens, :start_connections, true) do
       PhoenixLens.Config.connection_children()
+    else
+      []
+    end
+  end
+
+  defp alert_children do
+    if Application.get_env(:phoenix_lens, :start_alerts, true) do
+      [{PhoenixLens.Alerts.Scheduler, []}]
     else
       []
     end

@@ -19,8 +19,9 @@ Then open:
 - [http://localhost:4000](http://localhost:4000) — dummy home
 - [http://localhost:4000/lens](http://localhost:4000/lens) — notebook
 - [http://localhost:4000/lens/settings](http://localhost:4000/lens/settings) — switch PostgreSQL ↔ DuckDB and attach extra sources
+- [http://localhost:4000/lens/settings/mcp](http://localhost:4000/lens/settings/mcp) — project tokens for the MCP endpoint at `/lens/mcp`
 
-Screenshots and a walkthrough of those pages: [../docs/Guide.md](../docs/Guide.md).
+Screenshots and a walkthrough of those pages: [../docs/Guide.md](../docs/Guide.md). MCP setup: [../docs/MCP.md](../docs/MCP.md).
 
 If tables already exist from an older dummy setup:
 

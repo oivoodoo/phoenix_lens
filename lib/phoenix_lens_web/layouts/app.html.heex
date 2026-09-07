@@ -1,15 +1,21 @@
-<div class="lens-shell">
+<div class={["lens-shell", @page == :unlock && "is-locked"]}>
   <header class="lens-topbar">
     <a class="lens-logo" href={"#{@lens_prefix}"} aria-label="Lens home">
       <span class="lens-mark" aria-hidden="true"></span>
       <span class="lens-word">Lens</span>
     </a>
 
-    <form class="lens-search" action={"#{@lens_prefix}/questions"} method="get" role="search">
+    <form
+      :if={@page != :unlock}
+      class="lens-search"
+      action={"#{@lens_prefix}/questions"}
+      method="get"
+      role="search"
+    >
       <input type="search" name="q" placeholder="Search…" aria-label="Search questions" />
     </form>
 
-    <nav class="lens-top-links" aria-label="Primary">
+    <nav :if={@page != :unlock} class="lens-top-links" aria-label="Primary">
       <a href={"#{@lens_prefix}/dashboards"} class={active_class(@page, :dashboards)}>Dashboards</a>
       <a href={"#{@lens_prefix}/questions"} class={active_class(@page, :questions)}>Questions</a>
       <a href={"#{@lens_prefix}/catalog"} class={active_class(@page, :catalog)}>Data</a>
@@ -17,7 +23,7 @@
       <a href={"#{@lens_prefix}/settings"} class={active_class(@page, :settings)}>Settings</a>
     </nav>
 
-    <a class="lens-ask-btn" href={"#{@lens_prefix}/ask"}>
+    <a :if={@page != :unlock} class="lens-ask-btn" href={"#{@lens_prefix}/ask"}>
       <span aria-hidden="true">✦</span> Ask a question
     </a>
   </header>

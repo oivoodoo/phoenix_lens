@@ -46,6 +46,70 @@ defmodule PhoenixLens.Notebook do
     %{nb | table: table, filters: [], aggregations: [], breakouts: [], sorts: []}
   end
 
+  def from_attrs(attrs) when is_map(attrs) do
+    get = fn key -> attrs[key] || attrs[to_string(key)] end
+
+    limit =
+      case get.(:limit) do
+        n when is_integer(n) ->
+          n
+
+        n when is_binary(n) ->
+          case Integer.parse(n) do
+            {int, _} -> int
+            :error -> 100
+          end
+
+        _ ->
+          100
+      end
+
+    %__MODULE__{
+      table: blank(get.(:table)),
+      filters: List.wrap(get.(:filters)) |> Enum.with_index() |> Enum.map(&normalize_filter/1),
+      aggregations:
+        List.wrap(get.(:aggregations)) |> Enum.with_index() |> Enum.map(&normalize_agg/1),
+      breakouts:
+        List.wrap(get.(:breakouts)) |> Enum.map(&to_string/1) |> Enum.reject(&(&1 == "")),
+      sorts: List.wrap(get.(:sorts)) |> Enum.map(&normalize_sort/1),
+      limit: limit
+    }
+  end
+
+  defp normalize_filter({filter, index}) when is_map(filter) do
+    %{
+      id: filter[:id] || filter["id"] || index,
+      column: to_string(filter[:column] || filter["column"] || ""),
+      op: to_string(filter[:op] || filter["op"] || "="),
+      value: filter[:value] || filter["value"]
+    }
+  end
+
+  defp normalize_filter({_, index}), do: %{id: index, column: "", op: "=", value: nil}
+
+  defp normalize_agg({agg, index}) when is_map(agg) do
+    %{
+      id: agg[:id] || agg["id"] || index,
+      fun: to_string(agg[:fun] || agg["fun"] || "count"),
+      column: agg[:column] || agg["column"]
+    }
+  end
+
+  defp normalize_agg({_, index}), do: %{id: index, fun: "count", column: nil}
+
+  defp normalize_sort(sort) when is_map(sort) do
+    %{
+      column: to_string(sort[:column] || sort["column"] || ""),
+      dir: to_string(sort[:dir] || sort["dir"] || "asc")
+    }
+  end
+
+  defp normalize_sort(_), do: %{column: "", dir: "asc"}
+
+  defp blank(nil), do: nil
+  defp blank(""), do: nil
+  defp blank(v), do: to_string(v)
+
   defp select_sql(%__MODULE__{aggregations: [], breakouts: []}) do
     {:ok, "SELECT *", nil}
   end

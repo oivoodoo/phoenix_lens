@@ -1,7 +1,7 @@
 defmodule PhoenixLens.MixProject do
   use Mix.Project
 
-  @version "0.1.2"
+  @version "0.1.3"
   @source_url "https://github.com/oivoodoo/phoenix_lens"
   @docs_url "https://hexdocs.pm/phoenix_lens"
   @pages_url "https://oivoodoo.github.io/phoenix_lens"
@@ -26,7 +26,7 @@ defmodule PhoenixLens.MixProject do
 
   def application do
     [
-      extra_applications: [:logger, :runtime_tools, :crypto, :inets],
+      extra_applications: [:logger, :runtime_tools, :crypto, :inets, :ssl],
       mod: {PhoenixLens.Application, []}
     ]
   end
@@ -45,6 +45,10 @@ defmodule PhoenixLens.MixProject do
       {:ecto_sql, "~> 3.11"},
       {:bandit, "~> 1.5"},
       {:duckdbex, "~> 0.4", optional: true},
+      {:gen_smtp, "~> 1.2", optional: true},
+      {:nimble_totp, "~> 1.0"},
+      {:eqrcode, "~> 0.2"},
+      {:wax_, "~> 0.7"},
       {:plug_cowboy, "~> 2.6", only: :test},
       {:ex_doc, "~> 0.34", only: :dev, runtime: false}
     ]
@@ -68,6 +72,8 @@ defmodule PhoenixLens.MixProject do
       main: "guide",
       extras: [
         "docs/Guide.md",
+        "docs/MCP.md",
+        "docs/Alerts.md",
         "README.md",
         "CHANGELOG.md",
         "docs/Phoenix.md",
@@ -81,6 +87,8 @@ defmodule PhoenixLens.MixProject do
       groups_for_extras: [
         Guides: [
           "docs/Guide.md",
+          "docs/MCP.md",
+          "docs/Alerts.md",
           "docs/Phoenix.md",
           "docs/Policy.md",
           "docs/Permissions.md"

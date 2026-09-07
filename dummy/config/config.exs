@@ -16,6 +16,10 @@ config :dummy, DummyWeb.Endpoint,
 
 config :phoenix, :json_library, Jason
 
+config :wax_,
+  origin: "http://localhost:4000",
+  rp_id: :auto
+
 config :phoenix_lens,
   repo: Dummy.Repo,
   masked_fields: [:email, :first_name, :phone, :ip, :author_email]

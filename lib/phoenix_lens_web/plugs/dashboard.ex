@@ -16,12 +16,13 @@ defmodule PhoenixLensWeb.Plugs.Dashboard do
       |> assign(:lens_actor, actor(conn, config))
       |> assign(:lens_databases, Map.values(config.databases) |> Enum.sort_by(& &1[:id]))
 
-    if asset_request?(conn) do
+    if skip_csrf?(conn) do
       Plug.Conn.put_private(conn, :plug_skip_csrf_protection, true)
     else
       conn
       |> maybe_basic_auth(opts, config)
       |> maybe_halt()
+      |> maybe_lock()
     end
   end
 
@@ -62,7 +63,7 @@ defmodule PhoenixLensWeb.Plugs.Dashboard do
     conn.assigns[config.actor_assign]
   end
 
-  defp asset_request?(conn), do: "assets" in conn.path_info
+  defp skip_csrf?(conn), do: "assets" in conn.path_info or "mcp" in conn.path_info
 
   defp maybe_basic_auth(conn, opts, config) do
     username = opts[:username] || config.username
@@ -88,6 +89,33 @@ defmodule PhoenixLensWeb.Plugs.Dashboard do
   end
 
   defp maybe_halt(conn), do: conn
+
+  defp maybe_lock(%{halted: true} = conn), do: conn
+
+  defp maybe_lock(conn) do
+    cond do
+      skip_lock?(conn) ->
+        conn
+
+      not PhoenixLens.Auth.required?() ->
+        conn
+
+      get_session(conn, :lens_unlocked) == true ->
+        conn
+
+      true ->
+        prefix = conn.assigns[:lens_prefix] || "/lens"
+
+        conn
+        |> put_resp_header("location", prefix <> "/unlock")
+        |> send_resp(302, "")
+        |> halt()
+    end
+  end
+
+  defp skip_lock?(conn) do
+    skip_csrf?(conn) or "unlock" in conn.path_info
+  end
 
   defp find_subsequence(_list, []), do: 0
 

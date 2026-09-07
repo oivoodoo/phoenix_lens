@@ -4,7 +4,7 @@ defmodule PhoenixLensWeb.Components.ResultTable do
 
   alias PhoenixLens.{Result, Viz}
 
-  @palette ["#509EE3", "#88BF4D", "#A989C5", "#F9D45C", "#EF8C8C", "#F2A86F", "#98D9D9"]
+  @palette ["#04A9F5", "#FF9F43", "#1DE9B6", "#E83E8C", "#3F4D67", "#F4C22B", "#3EBFEA"]
 
   attr :result, :map, required: true
   attr :page_info, :map, default: nil

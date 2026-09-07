@@ -16,6 +16,10 @@ end
 
 Audit `actor` is `conn.assigns[:current_user]` (configurable via `actor_assign:`). A struct with `:id` is stored as `user:<id>` — never the email.
 
+The MCP server is a second entry point, not a second permission model. Mount `PhoenixLensWeb.Plugs.MCP` on the same host, issue project tokens in **Settings → MCP**, and treat those tokens like admin credentials. MCP audit rows use `mcp:<token_id>`. A stolen token cannot mint more tokens. See [MCP.md](MCP.md).
+
+Optional **Settings → Security** (authenticator app and passkeys) is an extra lock on the LiveView UI after the host pipeline has already let the operator in. MCP tokens skip it. `PhoenixLens.Auth.reset!/0` clears enrollment from IEx if you lose the factor.
+
 Prefer a Postgres role that can `SELECT` but not `INSERT`/`UPDATE`/`DELETE` on application tables, and point Lens at a replica:
 
 ```elixir

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.3
+
+- MCP server at `/lens/mcp` (Streamable HTTP JSON-RPC) covering catalog, SQL, questions, dashboards, audit, engines, sources, and column protection.
+- Settings → MCP issues project token ids (`plt_…`) and one-time secrets (`lns_…`) for Bearer auth.
+- Alerts on saved questions (rows / no rows / above / below) delivered by email (SMTP) and webhooks. Integrations live in Settings.
+- Optional authenticator-app TOTP and passkey unlock in Settings → Security. MCP tokens skip the UI lock.
+
 ## 0.1.2
 
 - Guide covering features, query design, DuckDB vs PostgreSQL, with dummy-app screenshots.

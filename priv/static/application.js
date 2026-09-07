@@ -202,11 +202,143 @@
     }
   };
 
+  function b64ToBuf(b64) {
+    if (!b64) return new ArrayBuffer(0);
+    var s = String(b64).replace(/-/g, "+").replace(/_/g, "/");
+    while (s.length % 4) s += "=";
+    var bin = atob(s);
+    var out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out.buffer;
+  }
+
+  function bufToB64url(buf) {
+    var bytes = new Uint8Array(buf);
+    var str = "";
+    for (var i = 0; i < bytes.length; i++) str += String.fromCharCode(bytes[i]);
+    return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+
+  function credentialIds(list) {
+    return (list || []).map(function (id) {
+      return { type: "public-key", id: b64ToBuf(id) };
+    });
+  }
+
+  var Passkey = {
+    mounted: function () {
+      var self = this;
+      this.assertOpts = null;
+      this.pushEvent("passkey_origin", { origin: window.location.origin });
+      var form = this.el.querySelector("form[phx-submit='start_passkey']");
+      if (form && !form.querySelector("input[name='origin']")) {
+        var hidden = document.createElement("input");
+        hidden.type = "hidden";
+        hidden.name = "origin";
+        hidden.value = window.location.origin;
+        form.appendChild(hidden);
+      }
+      this.handleEvent("passkey-register-options", function (opts) {
+        self.register(opts);
+      });
+      this.handleEvent("passkey-assert-options", function (opts) {
+        self.assertOpts = opts;
+      });
+      var btn = this.el.querySelector("[data-passkey-assert]");
+      if (btn) {
+        btn.addEventListener("click", function () {
+          if (self.assertOpts) self.assert(self.assertOpts);
+          else self.pushEvent("passkey_origin", { origin: window.location.origin });
+        });
+      }
+    },
+    register: function (opts) {
+      var self = this;
+      if (!window.PublicKeyCredential || !navigator.credentials) {
+        this.pushEvent("passkey_attestation", { error: "This browser does not support passkeys" });
+        return;
+      }
+      navigator.credentials
+        .create({
+          publicKey: {
+            challenge: b64ToBuf(opts.challenge),
+            rp: { id: opts.rpId, name: opts.rpName || "Lens" },
+            user: {
+              id: b64ToBuf(opts.userId),
+              name: opts.userName || "operator",
+              displayName: opts.userDisplayName || "Lens operator"
+            },
+            pubKeyCredParams: [
+              { type: "public-key", alg: -7 },
+              { type: "public-key", alg: -257 }
+            ],
+            authenticatorSelection: {
+              residentKey: "preferred",
+              userVerification: "preferred"
+            },
+            excludeCredentials: credentialIds(opts.excludeCredentials),
+            timeout: 60000,
+            attestation: "none"
+          }
+        })
+        .then(function (cred) {
+          if (!cred) {
+            self.pushEvent("passkey_attestation", { error: "Passkey registration was cancelled" });
+            return;
+          }
+          self.pushEvent("passkey_attestation", {
+            rawId: bufToB64url(cred.rawId),
+            attestationObject: bufToB64url(cred.response.attestationObject),
+            clientDataJSON: bufToB64url(cred.response.clientDataJSON)
+          });
+        })
+        .catch(function (err) {
+          self.pushEvent("passkey_attestation", {
+            error: (err && err.message) || "Passkey registration failed"
+          });
+        });
+    },
+    assert: function (opts) {
+      var self = this;
+      if (!window.PublicKeyCredential || !navigator.credentials) {
+        this.pushEvent("passkey_assert", { error: "This browser does not support passkeys" });
+        return;
+      }
+      navigator.credentials
+        .get({
+          publicKey: {
+            challenge: b64ToBuf(opts.challenge),
+            rpId: opts.rpId,
+            allowCredentials: credentialIds(opts.allowCredentials),
+            userVerification: "preferred",
+            timeout: 60000
+          }
+        })
+        .then(function (cred) {
+          if (!cred) {
+            self.pushEvent("passkey_assert", { error: "Passkey sign-in was cancelled" });
+            return;
+          }
+          self.pushEvent("passkey_assert", {
+            rawId: bufToB64url(cred.rawId),
+            authenticatorData: bufToB64url(cred.response.authenticatorData),
+            signature: bufToB64url(cred.response.signature),
+            clientDataJSON: bufToB64url(cred.response.clientDataJSON)
+          });
+        })
+        .catch(function (err) {
+          self.pushEvent("passkey_assert", {
+            error: (err && err.message) || "Passkey sign-in failed"
+          });
+        });
+    }
+  };
+
   var csrf = document.querySelector("meta[name='csrf-token']");
   var token = csrf ? csrf.getAttribute("content") : "";
   var liveSocket = new LiveView.LiveSocket("/live", Phoenix.Socket, {
     params: { _csrf_token: token },
-    hooks: { SqlEditor: SqlEditor, ResultDownload: ResultDownload }
+    hooks: { SqlEditor: SqlEditor, ResultDownload: ResultDownload, Passkey: Passkey }
   });
   liveSocket.connect();
   window.liveSocket = liveSocket;

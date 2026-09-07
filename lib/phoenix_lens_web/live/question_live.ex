@@ -2,7 +2,7 @@ defmodule PhoenixLensWeb.QuestionLive do
   @moduledoc false
   use PhoenixLensWeb, :live_view
 
-  alias PhoenixLens.{Autocomplete, Dashboards, Questions, Query}
+  alias PhoenixLens.{Alerts, Autocomplete, Dashboards, Integrations, Questions, Query}
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
@@ -22,7 +22,10 @@ defmodule PhoenixLensWeb.QuestionLive do
          |> assign(:error, error)
          |> assign(:editor_open, true)
          |> assign(:ac, Autocomplete.payload())
-         |> assign(:dashboards, Dashboards.list())}
+         |> assign(:dashboards, Dashboards.list())
+         |> assign(:alert_modal, false)
+         |> assign(:alert_error, nil)
+         |> refresh_alerts(question["id"])}
 
       {:error, error} ->
         {:ok,
@@ -113,6 +116,66 @@ defmodule PhoenixLensWeb.QuestionLive do
     {:noreply, assign(socket, :editor_open, !socket.assigns.editor_open)}
   end
 
+  def handle_event("open_alert", _params, socket) do
+    {:noreply, socket |> assign(:alert_modal, true) |> assign(:alert_error, nil)}
+  end
+
+  def handle_event("close_alert", _params, socket) do
+    {:noreply, assign(socket, :alert_modal, false)}
+  end
+
+  def handle_event("save_alert", params, socket) do
+    q = socket.assigns.question
+
+    attrs = %{
+      question_id: q["id"],
+      condition: params["condition"],
+      threshold: params["threshold"],
+      schedule: params["schedule"],
+      once: params["once"],
+      emails: params["emails"],
+      webhook_ids: List.wrap(params["webhook_id"] || params["webhook_id[]"])
+    }
+
+    case Alerts.save(attrs) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> assign(:alert_modal, false)
+         |> assign(:alert_error, nil)
+         |> put_flash(:info, "Alert created")
+         |> refresh_alerts(q["id"])}
+
+      {:error, error} ->
+        {:noreply, assign(socket, :alert_error, error.message)}
+    end
+  end
+
+  def handle_event("delete_alert", %{"id" => id}, socket) do
+    _ = Alerts.delete(id)
+    q = socket.assigns.question
+    {:noreply, socket |> put_flash(:info, "Alert deleted") |> refresh_alerts(q["id"])}
+  end
+
+  def handle_event("run_alert", %{"id" => id}, socket) do
+    case PhoenixLens.Alerts.Runner.run_one(id, force: true, actor: socket.assigns.lens_actor) do
+      {:ok, %{fired: true}} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Alert sent")
+         |> refresh_alerts(socket.assigns.question["id"])}
+
+      {:ok, %{fired: false}} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Checked — condition not met, nothing sent")
+         |> refresh_alerts(socket.assigns.question["id"])}
+
+      {:error, message} ->
+        {:noreply, put_flash(socket, :error, message)}
+    end
+  end
+
   @impl true
   def render(%{question: :index} = assigns) do
     ~H"""
@@ -173,6 +236,7 @@ defmodule PhoenixLensWeb.QuestionLive do
             >
               Export
             </a>
+            <button type="button" class="ghost" phx-click="open_alert">Alert</button>
           </div>
           <div class="lens-toolbar-group">
             <button
@@ -207,6 +271,23 @@ defmodule PhoenixLensWeb.QuestionLive do
         </form>
       <% end %>
 
+      <section :if={@alerts != []} class="lens-alert-list">
+        <p class="lens-kicker">Alerts</p>
+        <div :for={alert <- @alerts} class="lens-alert-row">
+          <span>
+            <strong>{condition_label(alert)}</strong>
+            <span class="lens-muted"> · {alert["schedule"]} · {dest_label(alert)}</span>
+          </span>
+          <span class="lens-muted">{alert["last_status"] || "never run"}</span>
+          <button type="button" class="ghost tiny" phx-click="run_alert" phx-value-id={alert["id"]}>
+            Send now
+          </button>
+          <button type="button" class="ghost tiny" phx-click="delete_alert" phx-value-id={alert["id"]}>
+            Delete
+          </button>
+        </div>
+      </section>
+
       <%= if @error do %>
         <div class="lens-error">{@error.message}</div>
       <% end %>
@@ -221,8 +302,89 @@ defmodule PhoenixLensWeb.QuestionLive do
           />
         <% end %>
       </section>
+
+      <div
+        :if={@alert_modal}
+        class="lens-modal-backdrop"
+        phx-window-keydown="close_alert"
+        phx-key="escape"
+      >
+        <div class="lens-modal" role="dialog" aria-modal="true">
+          <header class="lens-modal-head">
+            <h2>Create an alert</h2>
+            <button type="button" class="ghost icon" phx-click="close_alert" aria-label="Close">×</button>
+          </header>
+          <form phx-submit="save_alert" class="lens-modal-form">
+            <div :if={@alert_error} class="lens-error">{@alert_error}</div>
+            <label>
+              When
+              <select class="lens-field" name="condition">
+                <option value="rows">the question returns any rows</option>
+                <option value="no_rows">the question returns no rows</option>
+                <option value="above">a number goes above a goal</option>
+                <option value="below">a number goes below a goal</option>
+              </select>
+            </label>
+            <label>
+              Goal (for above/below)
+              <input class="lens-field" type="text" name="threshold" placeholder="100" />
+            </label>
+            <label>
+              Check
+              <select class="lens-field" name="schedule">
+                <option value="1m">every minute</option>
+                <option value="5m">every 5 minutes</option>
+                <option value="15m">every 15 minutes</option>
+                <option value="1h" selected>hourly</option>
+                <option value="6h">every 6 hours</option>
+                <option value="1d">daily</option>
+              </select>
+            </label>
+            <label>
+              Email recipients
+              <input class="lens-field" type="text" name="emails" placeholder="ops@example.com" />
+            </label>
+            <fieldset :if={@webhooks != []} class="lens-hook-picks">
+              <legend>Webhooks</legend>
+              <label :for={hook <- @webhooks} class="lens-check">
+                <input type="checkbox" name="webhook_id[]" value={hook["id"]} />
+                {hook["name"]}
+              </label>
+            </fieldset>
+            <p :if={@webhooks == []} class="lens-muted">
+              Add a webhook in <a href={"#{@lens_prefix}/settings/integrations"}>Integrations</a>.
+            </p>
+            <label class="lens-check">
+              <input type="checkbox" name="once" value="true" /> Only send once, then disable
+            </label>
+            <div class="lens-modal-actions">
+              <button type="button" class="ghost" phx-click="close_alert">Cancel</button>
+              <button type="submit">Create alert</button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
     """
+  end
+
+  defp refresh_alerts(socket, question_id) do
+    socket
+    |> assign(:alerts, Alerts.list_for_question(question_id))
+    |> assign(:webhooks, Integrations.webhooks())
+  end
+
+  defp condition_label(%{"condition" => "rows"}), do: "When there are results"
+  defp condition_label(%{"condition" => "no_rows"}), do: "When there are no results"
+  defp condition_label(%{"condition" => "above"} = a), do: "When above #{a["threshold"]}"
+  defp condition_label(%{"condition" => "below"} = a), do: "When below #{a["threshold"]}"
+  defp condition_label(_), do: "Alert"
+
+  defp dest_label(alert) do
+    emails = Alerts.parse_emails(alert["emails"])
+    hooks = Alerts.parse_webhook_ids(alert["webhook_ids"])
+    parts = emails ++ Enum.map(hooks, &"webhook #{&1}")
+    if parts == [], do: "no destination", else: Enum.join(parts, ", ")
   end
 
   defp maybe_filter(questions, ""), do: questions

@@ -92,14 +92,14 @@ defmodule PhoenixLensWeb.HomeLive do
       <svg class="lens-scene" viewBox="0 0 960 180" aria-hidden="true">
         <path
           d="M0 140 C120 120 180 150 280 130 C380 110 420 150 520 135 C640 115 720 150 960 128 L960 180 L0 180 Z"
-          fill="#E4F0FA"
+          fill="#E3F7FD"
         />
-        <path d="M40 150 L80 90 L120 150" fill="none" stroke="#B9D8F0" stroke-width="2" />
-        <path d="M200 150 L230 70 L260 150" fill="none" stroke="#B9D8F0" stroke-width="2" />
-        <circle cx="720" cy="78" r="18" fill="none" stroke="#8DC7EC" stroke-width="2" />
-        <path d="M720 96 L720 150 M700 110 L740 110" stroke="#8DC7EC" stroke-width="2" fill="none" />
-        <path d="M780 150 C800 110 840 110 860 150" fill="none" stroke="#B9D8F0" stroke-width="2" />
-        <path d="M820 150 C830 128 850 128 860 150" fill="none" stroke="#8DC7EC" stroke-width="2" />
+        <path d="M40 150 L80 90 L120 150" fill="none" stroke="#7AD3F0" stroke-width="2" />
+        <path d="M200 150 L230 70 L260 150" fill="none" stroke="#7AD3F0" stroke-width="2" />
+        <circle cx="720" cy="78" r="18" fill="none" stroke="#1DE9B6" stroke-width="2" />
+        <path d="M720 96 L720 150 M700 110 L740 110" stroke="#1DE9B6" stroke-width="2" fill="none" />
+        <path d="M780 150 C800 110 840 110 860 150" fill="none" stroke="#7AD3F0" stroke-width="2" />
+        <path d="M820 150 C830 128 850 128 860 150" fill="none" stroke="#04A9F5" stroke-width="2" />
       </svg>
     </div>
     """

@@ -8,7 +8,7 @@ This is not Metabase. It is the PgHero-shaped tool you mount at `/lens` so you c
 
 ```elixir
 def deps do
-  [{:phoenix_lens, "~> 0.1.2"}]
+  [{:phoenix_lens, "~> 0.1.3"}]
 end
 ```
 
@@ -37,7 +37,7 @@ defmodule MyApp.Repo.Migrations.AddPhoenixLens do
 end
 ```
 
-Then open `/lens`. Prefer a read replica. Product tour, query design, and dummy-app screenshots: [docs/Guide.md](docs/Guide.md). Mount details: [docs/Phoenix.md](docs/Phoenix.md).
+Then open `/lens`. Prefer a read replica. Product tour, query design, and dummy-app screenshots: [docs/Guide.md](docs/Guide.md). Mount details: [docs/Phoenix.md](docs/Phoenix.md). MCP server (agents): [docs/MCP.md](docs/MCP.md).
 
 ## DuckDB engine
 
@@ -63,13 +63,48 @@ DuckDB is optional. Add the NIF to the **host** app (the dummy app already does)
 ```elixir
 def deps do
   [
-    {:phoenix_lens, "~> 0.1.2"},
+    {:phoenix_lens, "~> 0.1.3"},
     {:duckdbex, "~> 0.4"}
   ]
 end
 ```
 
 Questions, dashboards, settings, and the audit log still live on the host Repo. Field policy still runs on every DuckDB result.
+
+## MCP server
+
+Agents can drive the same notebook over [Model Context Protocol](https://modelcontextprotocol.io) at `/lens/mcp`. After `Plug.Parsers` in the host endpoint:
+
+```elixir
+plug PhoenixLensWeb.Plugs.MCP, path: "/lens/mcp"
+```
+
+**Settings → MCP** issues a project token id (`plt_…`) and a one-time secret (`lns_…`). Clients send `Authorization: Bearer <secret>`. Tools cover catalog, SQL, questions, dashboards, audit, engines, sources, and column protection. Masked cells stay `[redacted]`.
+
+```json
+{
+  "mcpServers": {
+    "phoenix-lens": {
+      "url": "http://localhost:4000/lens/mcp",
+      "headers": {
+        "Authorization": "Bearer lns_…"
+      }
+    }
+  }
+}
+```
+
+Details: [docs/MCP.md](docs/MCP.md).
+
+## Alerts
+
+Saved questions can notify **email** or a **webhook** when they return rows, return none, or cross a numeric goal. Configure SMTP and webhook URLs in **Settings → Integrations**, then click **Alert** on a question.
+
+Payloads are field-policy masked. Email sending needs `{:gen_smtp, "~> 1.2"}` in the host app. See [docs/Alerts.md](docs/Alerts.md).
+
+## Security lock
+
+**Settings → Security** can turn on an authenticator app (TOTP) and register passkeys. After either is enabled, the UI asks for that factor at `/lens/unlock`. This is an extra lock on the notebook, not a replacement for the host pipeline. MCP tokens skip it. If you lock yourself out: `PhoenixLens.Auth.reset!()` in IEx.
 
 ## Dummy app
 
@@ -107,8 +142,10 @@ Then visit `http://localhost:8080/lens`.
 ## Docs
 
 - [Guide](https://oivoodoo.github.io/phoenix_lens/guide.html) — features, query design, DuckDB vs PostgreSQL, screenshots ([source](docs/Guide.md))
+- [MCP](docs/MCP.md) — agent endpoint, project tokens
+- [Alerts](docs/Alerts.md) — email and webhook notifications
 - [HexDocs](https://hexdocs.pm/phoenix_lens)
 - [Phoenix mount](docs/Phoenix.md)
 - [Field policy](docs/Policy.md)
-- [Permissions](docs/Permissions.md)
+- [Permissions](docs/Permissions.md) — host pipeline plus optional 2FA / passkeys
 - [Spec](docs/spec.md)

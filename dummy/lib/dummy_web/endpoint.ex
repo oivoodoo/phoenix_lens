@@ -9,8 +9,8 @@ defmodule DummyWeb.Endpoint do
   ]
 
   socket "/live", Phoenix.LiveView.Socket,
-    websocket: [connect_info: [session: @session_options]],
-    longpoll: [connect_info: [session: @session_options]]
+    websocket: [connect_info: [:uri, session: @session_options]],
+    longpoll: [connect_info: [:uri, session: @session_options]]
 
   plug Plug.Static,
     at: "/",
@@ -32,6 +32,8 @@ defmodule DummyWeb.Endpoint do
     parsers: [:urlencoded, :multipart, :json],
     pass: ["*/*"],
     json_decoder: Phoenix.json_library()
+
+  plug PhoenixLensWeb.Plugs.MCP, path: "/lens/mcp"
 
   plug Plug.MethodOverride
   plug Plug.Head

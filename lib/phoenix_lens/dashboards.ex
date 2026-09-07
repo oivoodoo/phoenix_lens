@@ -75,7 +75,7 @@ defmodule PhoenixLens.Dashboards do
 
   def add_card(dashboard_id, question_id, opts \\ []) do
     repo = metadata_repo!()
-    date_column = opts[:date_column] || opts["date_column"]
+    date_column = card_date_column(opts)
 
     %{rows: [[pos]]} =
       repo.query!(
@@ -148,6 +148,16 @@ defmodule PhoenixLens.Dashboards do
     |> String.replace(~r/[^0-9T:Z.\-]/, "")
     |> String.slice(0, 32)
   end
+
+  defp card_date_column(opts) when is_list(opts) do
+    Keyword.get(opts, :date_column)
+  end
+
+  defp card_date_column(opts) when is_map(opts) do
+    opts[:date_column] || opts["date_column"]
+  end
+
+  defp card_date_column(_), do: nil
 
   defp query_maps(sql, params \\ []) do
     case metadata_repo!() do

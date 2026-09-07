@@ -34,8 +34,15 @@ defmodule PhoenixLens.TestEndpoint do
   ]
 
   socket "/live", Phoenix.LiveView.Socket,
-    websocket: [connect_info: [session: @session_options]],
-    longpoll: [connect_info: [session: @session_options]]
+    websocket: [connect_info: [:uri, session: @session_options]],
+    longpoll: [connect_info: [:uri, session: @session_options]]
+
+  plug Plug.Parsers,
+    parsers: [:urlencoded, :multipart, :json],
+    pass: ["*/*"],
+    json_decoder: Jason
+
+  plug PhoenixLensWeb.Plugs.MCP, path: "/lens/mcp"
 
   plug Plug.Session, @session_options
   plug PhoenixLens.TestRouter
