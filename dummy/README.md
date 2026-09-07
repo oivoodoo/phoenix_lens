@@ -20,6 +20,8 @@ Then open:
 - [http://localhost:4000/lens](http://localhost:4000/lens) — notebook
 - [http://localhost:4000/lens/settings](http://localhost:4000/lens/settings) — switch PostgreSQL ↔ DuckDB and attach extra sources
 
+Screenshots and a walkthrough of those pages: [../docs/Guide.md](../docs/Guide.md).
+
 If tables already exist from an older dummy setup:
 
 ```sh

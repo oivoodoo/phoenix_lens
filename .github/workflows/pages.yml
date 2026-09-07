@@ -1,0 +1,60 @@
+name: GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.17"
+          otp-version: "27"
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: pages-${{ runner.os }}-mix-${{ hashFiles('mix.lock') }}
+          restore-keys: pages-${{ runner.os }}-mix-
+
+      - name: Build docs
+        run: |
+          mix local.hex --force
+          mix local.rebar --force
+          mix deps.get
+          mix docs
+          touch doc/.nojekyll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: doc
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+
+      - name: Publish gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./doc
+          force_orphan: true
+          enable_jekyll: false

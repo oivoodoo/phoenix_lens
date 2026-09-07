@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2
+
+- Guide covering features, query design, DuckDB vs PostgreSQL, with dummy-app screenshots.
+- Publish the guide and screenshots on HexDocs and GitHub Pages (`https://oivoodoo.github.io/phoenix_lens`).
+
 ## 0.1.1
 
 - Notebook query builder, native SQL editor, Ctrl+Enter / Run, and in-place dashboard titles.

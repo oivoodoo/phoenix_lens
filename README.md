@@ -8,7 +8,7 @@ This is not Metabase. It is the PgHero-shaped tool you mount at `/lens` so you c
 
 ```elixir
 def deps do
-  [{:phoenix_lens, "~> 0.1.1"}]
+  [{:phoenix_lens, "~> 0.1.2"}]
 end
 ```
 
@@ -37,7 +37,7 @@ defmodule MyApp.Repo.Migrations.AddPhoenixLens do
 end
 ```
 
-Then open `/lens`. Prefer a read replica; see [docs/Phoenix.md](docs/Phoenix.md).
+Then open `/lens`. Prefer a read replica. Product tour, query design, and dummy-app screenshots: [docs/Guide.md](docs/Guide.md). Mount details: [docs/Phoenix.md](docs/Phoenix.md).
 
 ## DuckDB engine
 
@@ -63,7 +63,7 @@ DuckDB is optional. Add the NIF to the **host** app (the dummy app already does)
 ```elixir
 def deps do
   [
-    {:phoenix_lens, "~> 0.1.1"},
+    {:phoenix_lens, "~> 0.1.2"},
     {:duckdbex, "~> 0.4"}
   ]
 end
@@ -106,6 +106,8 @@ Then visit `http://localhost:8080/lens`.
 
 ## Docs
 
+- [Guide](https://oivoodoo.github.io/phoenix_lens/guide.html) — features, query design, DuckDB vs PostgreSQL, screenshots ([source](docs/Guide.md))
+- [HexDocs](https://hexdocs.pm/phoenix_lens)
 - [Phoenix mount](docs/Phoenix.md)
 - [Field policy](docs/Policy.md)
 - [Permissions](docs/Permissions.md)

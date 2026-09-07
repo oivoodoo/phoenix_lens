@@ -7,7 +7,7 @@ Add PhoenixLens to `mix.exs`:
 ```elixir
 def deps do
   [
-    {:phoenix_lens, "~> 0.1.1"}
+    {:phoenix_lens, "~> 0.1.2"}
   ]
 end
 ```
@@ -44,7 +44,7 @@ defmodule MyApp.Repo.Migrations.AddPhoenixLens do
 end
 ```
 
-Then open `/lens`.
+Then open `/lens`. Screenshots and query-engine details: [Guide.md](Guide.md).
 
 The SQL editor autocompletes tables and columns from Ecto schemas (and `information_schema` when a repo is configured). Type after `FROM` / `JOIN` for tables, `users.` for that table’s columns, or a prefix in `SELECT` / `WHERE`. Tab or Enter inserts. Protected columns are labelled redacted.
 
