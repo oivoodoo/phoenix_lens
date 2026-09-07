@@ -87,7 +87,7 @@ A saved question is a name, SQL, viz, and database id. Opening it re-runs throug
 
 ![Saved question with masked cells](images/question.png)
 
-Dashboards are folders of cards. Each card is a saved question. Optional date-range filters wrap the SQL when a date column is set.
+Dashboards are folders of cards. Each card is a saved question. Optional date-range filters wrap the SQL when a date column is set. **Edit** turns on a 12-column board: drag a card to move it, pull the corner to resize, then **Save**. **Cancel** drops unsaved arrangement.
 
 ![Dashboard: bar chart, aggregation table, masked users](images/dashboard.png)
 

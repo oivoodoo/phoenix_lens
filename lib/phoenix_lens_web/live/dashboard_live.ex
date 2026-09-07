@@ -20,7 +20,9 @@ defmodule PhoenixLensWeb.DashboardLive do
          |> assign(:name, dashboard["name"])
          |> assign(:cards, cards)
          |> assign(:from, from)
-         |> assign(:to, to)}
+         |> assign(:to, to)
+         |> assign(:editing, false)
+         |> assign(:layout_snapshot, nil)}
 
       {:error, error} ->
         {:ok,
@@ -77,9 +79,88 @@ defmodule PhoenixLensWeb.DashboardLive do
     {:ok, dashboard} = Dashboards.get(socket.assigns.dashboard["id"])
 
     cards =
-      Enum.map(dashboard["cards"], &run_card(&1, socket.assigns.from, socket.assigns.to, socket))
+      if socket.assigns[:editing] do
+        Enum.reject(socket.assigns.cards, &(to_string(&1.id) == to_string(id)))
+      else
+        Enum.map(
+          dashboard["cards"],
+          &run_card(&1, socket.assigns.from, socket.assigns.to, socket)
+        )
+      end
 
     {:noreply, socket |> assign(:dashboard, dashboard) |> assign(:cards, cards)}
+  end
+
+  def handle_event("edit", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:editing, true)
+     |> assign(:layout_snapshot, Enum.map(socket.assigns.cards, &layout_tuple/1))}
+  end
+
+  def handle_event("cancel_edit", _params, socket) do
+    cards = restore_layout(socket.assigns.cards, socket.assigns.layout_snapshot)
+
+    {:noreply,
+     socket
+     |> assign(:editing, false)
+     |> assign(:layout_snapshot, nil)
+     |> assign(:cards, cards)}
+  end
+
+  def handle_event("save_layout", _params, socket) do
+    items =
+      Enum.map(socket.assigns.cards, fn card ->
+        %{
+          "id" => card.id,
+          "col" => card.col,
+          "row" => card.row,
+          "size_x" => card.size_x,
+          "size_y" => card.size_y
+        }
+      end)
+
+    case Dashboards.save_layout(socket.assigns.dashboard["id"], items) do
+      {:ok, dashboard} ->
+        cards = apply_saved_layout(socket.assigns.cards, dashboard["cards"])
+
+        {:noreply,
+         socket
+         |> assign(:editing, false)
+         |> assign(:layout_snapshot, nil)
+         |> assign(:dashboard, dashboard)
+         |> assign(:cards, cards)
+         |> put_flash(:info, "Dashboard layout saved")}
+
+      {:error, error} ->
+        {:noreply, put_flash(socket, :error, error.message)}
+    end
+  end
+
+  def handle_event("place_card", params, socket) do
+    if socket.assigns[:editing] do
+      layout = Dashboards.clamp_layout(params)
+      id = to_string(params["id"] || params[:id])
+
+      cards =
+        Enum.map(socket.assigns.cards, fn card ->
+          if to_string(card.id) == id do
+            %{
+              card
+              | col: layout["col"],
+                row: layout["row"],
+                size_x: layout["size_x"],
+                size_y: layout["size_y"]
+            }
+          else
+            card
+          end
+        end)
+
+      {:noreply, assign(socket, :cards, cards)}
+    else
+      {:noreply, socket}
+    end
   end
 
   @impl true
@@ -129,38 +210,89 @@ defmodule PhoenixLensWeb.DashboardLive do
             phx-debounce="blur"
           />
         </form>
-        <button type="button" class="ghost" phx-click="delete" data-confirm="Delete this dashboard?">
-          Delete
-        </button>
+        <div class="lens-dash-actions">
+          <%= if @editing do %>
+            <button type="button" class="ghost" phx-click="cancel_edit">Cancel</button>
+            <button type="button" phx-click="save_layout">Save</button>
+          <% else %>
+            <button type="button" class="ghost" phx-click="edit">Edit</button>
+            <button
+              type="button"
+              class="ghost"
+              phx-click="delete"
+              data-confirm="Delete this dashboard?"
+            >
+              Delete
+            </button>
+          <% end %>
+        </div>
       </header>
 
-      <form method="get" class="lens-filter-row">
-        <label class="lens-chip">
-          Date range <input type="date" name="from" value={@from} />
-        </label>
-        <label class="lens-chip">
-          to <input type="date" name="to" value={@to} />
-        </label>
-        <button type="submit" class="ghost">Apply</button>
+      <form method="get" class="lens-filter-bar" aria-label="Dashboard filters">
+        <p class="lens-filter-kicker">Date range</p>
+        <div class="lens-filter-fields">
+          <label class="lens-filter-field">
+            <span>From</span>
+            <input type="date" name="from" value={@from} />
+          </label>
+          <span class="lens-filter-sep" aria-hidden="true">→</span>
+          <label class="lens-filter-field">
+            <span>To</span>
+            <input type="date" name="to" value={@to} />
+          </label>
+          <button type="submit">Apply</button>
+        </div>
       </form>
 
       <%= if @cards == [] do %>
         <p class="lens-empty">No cards yet. Save a question and pin it here.</p>
       <% end %>
 
-      <div class="lens-dash-grid">
-        <section :for={card <- @cards} class="lens-dash-card">
-          <header class="lens-card-head">
-            <a href={"#{@lens_prefix}/questions/#{card.question_id}"}>{card.name}</a>
-            <button type="button" class="ghost tiny" phx-click="unpin" phx-value-id={card.id}>
-              ···
+      <div
+        id={"lens-dash-board-#{@dashboard["id"]}"}
+        class={["lens-dash-board", @editing && "is-editing"]}
+        phx-hook="DashBoard"
+        data-cols={Dashboards.cols()}
+        data-editing={to_string(@editing)}
+      >
+        <section
+          :for={card <- @cards}
+          id={"dash-card-#{card.id}"}
+          class="lens-dash-card"
+          data-id={card.id}
+          data-col={card.col}
+          data-row={card.row}
+          data-sx={card.size_x}
+          data-sy={card.size_y}
+          style={"grid-column: #{card.col + 1} / span #{card.size_x}; grid-row: #{card.row + 1} / span #{card.size_y}"}
+        >
+          <header class="lens-card-head" data-dash-drag={@editing && "true"}>
+            <a :if={!@editing} href={"#{@lens_prefix}/questions/#{card.question_id}"}>{card.name}</a>
+            <span :if={@editing} class="lens-dash-card-title">{card.name}</span>
+            <button
+              :if={@editing}
+              type="button"
+              class="ghost tiny"
+              phx-click="unpin"
+              phx-value-id={card.id}
+            >
+              Remove
             </button>
           </header>
-          <%= if card.error do %>
-            <p class="lens-error">{card.error.message}</p>
-          <% else %>
-            <ResultTable.visualization result={card.result} viz={card.viz} />
-          <% end %>
+          <div class="lens-dash-card-body">
+            <%= if card.error do %>
+              <p class="lens-error">{card.error.message}</p>
+            <% else %>
+              <ResultTable.visualization result={card.result} viz={card.viz} />
+            <% end %>
+          </div>
+          <button
+            :if={@editing}
+            type="button"
+            class="lens-dash-resize"
+            data-dash-resize
+            aria-label={"Resize #{card.name}"}
+          ></button>
         </section>
       </div>
     </article>
@@ -190,14 +322,54 @@ defmodule PhoenixLensWeb.DashboardLive do
         {:error, error} -> {nil, error}
       end
 
+    layout = Dashboards.clamp_layout(card)
+
     %{
       id: card["id"],
       question_id: card["question_id"],
       name: card["question_name"],
       viz: card["viz"],
       result: result,
-      error: error
+      error: error,
+      col: layout["col"],
+      row: layout["row"],
+      size_x: layout["size_x"],
+      size_y: layout["size_y"]
     }
+  end
+
+  defp layout_tuple(card) do
+    {card.id, card.col, card.row, card.size_x, card.size_y}
+  end
+
+  defp restore_layout(cards, nil), do: cards
+
+  defp restore_layout(cards, snapshot) when is_list(snapshot) do
+    by_id = Map.new(snapshot, fn {id, col, row, sx, sy} -> {id, {col, row, sx, sy}} end)
+
+    Enum.map(cards, fn card ->
+      case Map.get(by_id, card.id) do
+        {col, row, sx, sy} ->
+          %{card | col: col, row: row, size_x: sx, size_y: sy}
+
+        nil ->
+          card
+      end
+    end)
+  end
+
+  defp apply_saved_layout(cards, saved) when is_list(saved) do
+    by_id = Map.new(saved, &{&1["id"], Dashboards.clamp_layout(&1)})
+
+    Enum.map(cards, fn card ->
+      case Map.get(by_id, card.id) do
+        %{"col" => col, "row" => row, "size_x" => sx, "size_y" => sy} ->
+          %{card | col: col, row: row, size_x: sx, size_y: sy}
+
+        _ ->
+          card
+      end
+    end)
   end
 
   defp default_name(dashboards) do

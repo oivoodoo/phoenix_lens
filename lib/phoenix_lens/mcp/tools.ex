@@ -260,6 +260,33 @@ defmodule PhoenixLens.MCP.Tools do
         end
       ),
       tool(
+        "layout_dashboard",
+        "Set card positions and sizes on a dashboard (12-column board). Each card needs id, col, row, size_x, size_y.",
+        object(
+          %{
+            "id" => integer("Dashboard id"),
+            "cards" => %{
+              "type" => "array",
+              "description" => "Card layouts",
+              "items" => %{
+                "type" => "object",
+                "properties" => %{
+                  "id" => integer("Dashboard card id"),
+                  "col" => integer("Column 0-11"),
+                  "row" => integer("Row"),
+                  "size_x" => integer("Width in columns"),
+                  "size_y" => integer("Height in rows")
+                }
+              }
+            }
+          },
+          ["id", "cards"]
+        ),
+        fn args, _ctx ->
+          Dashboards.save_layout(args["id"], args["cards"] || [])
+        end
+      ),
+      tool(
         "unpin_card",
         "Remove a dashboard card.",
         object(%{"card_id" => integer("Dashboard card id")}, ["card_id"]),

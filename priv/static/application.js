@@ -334,11 +334,140 @@
     }
   };
 
+  var COLS = 12;
+  var MIN_W = 3;
+  var MIN_H = 3;
+  var ROW_H = 56;
+  var GAP = 12;
+
+  function dashMetrics(el) {
+    var w = el.clientWidth || 1;
+    var colW = (w - GAP * (COLS - 1)) / COLS;
+    return { colW: colW, rowH: ROW_H, gap: GAP };
+  }
+
+  function clampCard(col, row, sx, sy) {
+    col = Math.max(0, Math.min(col, COLS - MIN_W));
+    row = Math.max(0, row);
+    sx = Math.max(MIN_W, Math.min(sx, COLS - col));
+    sy = Math.max(MIN_H, Math.min(sy, 40));
+    return { col: col, row: row, sx: sx, sy: sy };
+  }
+
+  function readCard(el) {
+    return {
+      id: el.getAttribute("data-id"),
+      col: parseInt(el.getAttribute("data-col"), 10) || 0,
+      row: parseInt(el.getAttribute("data-row"), 10) || 0,
+      sx: parseInt(el.getAttribute("data-sx"), 10) || 6,
+      sy: parseInt(el.getAttribute("data-sy"), 10) || 5
+    };
+  }
+
+  function applyCard(el, card) {
+    el.setAttribute("data-col", card.col);
+    el.setAttribute("data-row", card.row);
+    el.setAttribute("data-sx", card.sx);
+    el.setAttribute("data-sy", card.sy);
+    el.style.gridColumn = card.col + 1 + " / span " + card.sx;
+    el.style.gridRow = card.row + 1 + " / span " + card.sy;
+  }
+
+  function others(board, skipId) {
+    return Array.prototype.map
+      .call(board.querySelectorAll(".lens-dash-card"), function (el) {
+        if (el.getAttribute("data-id") === skipId) return null;
+        return readCard(el);
+      })
+      .filter(Boolean);
+  }
+
+  function hits(a, b) {
+    return a.col < b.col + b.sx && a.col + a.sx > b.col && a.row < b.row + b.sy && a.row + a.sy > b.row;
+  }
+
+  function fit(board, card) {
+    var rest = others(board, card.id);
+    var next = { col: card.col, row: card.row, sx: card.sx, sy: card.sy, id: card.id };
+    var guard = 0;
+    while (rest.some(function (o) { return hits(next, o); }) && guard++ < 80) {
+      next.row += 1;
+    }
+    return next;
+  }
+
+  var DashBoard = {
+    mounted: function () {
+      this.onDown = this.onDown.bind(this);
+      this.onMove = this.onMove.bind(this);
+      this.onUp = this.onUp.bind(this);
+      this.el.addEventListener("pointerdown", this.onDown);
+    },
+    updated: function () {},
+    destroyed: function () {
+      this.el.removeEventListener("pointerdown", this.onDown);
+      window.removeEventListener("pointermove", this.onMove);
+      window.removeEventListener("pointerup", this.onUp);
+    },
+    editing: function () {
+      return this.el.getAttribute("data-editing") === "true";
+    },
+    onDown: function (e) {
+      if (!this.editing()) return;
+      var resize = e.target.closest("[data-dash-resize]");
+      var drag = e.target.closest("[data-dash-drag]");
+      var cardEl = e.target.closest(".lens-dash-card");
+      if (!cardEl || (!resize && !drag)) return;
+      if (e.target.closest("button") && !resize) return;
+      e.preventDefault();
+      this.mode = resize ? "resize" : "drag";
+      this.cardEl = cardEl;
+      this.start = readCard(cardEl);
+      this.startX = e.clientX;
+      this.startY = e.clientY;
+      this.metrics = dashMetrics(this.el);
+      cardEl.classList.add("is-moving");
+      window.addEventListener("pointermove", this.onMove);
+      window.addEventListener("pointerup", this.onUp);
+    },
+    onMove: function (e) {
+      if (!this.cardEl) return;
+      var m = this.metrics;
+      var dCol = Math.round((e.clientX - this.startX) / (m.colW + m.gap));
+      var dRow = Math.round((e.clientY - this.startY) / (m.rowH + m.gap));
+      var next;
+      if (this.mode === "resize") {
+        next = clampCard(this.start.col, this.start.row, this.start.sx + dCol, this.start.sy + dRow);
+      } else {
+        next = clampCard(this.start.col + dCol, this.start.row + dRow, this.start.sx, this.start.sy);
+      }
+      next.id = this.start.id;
+      applyCard(this.cardEl, next);
+    },
+    onUp: function () {
+      window.removeEventListener("pointermove", this.onMove);
+      window.removeEventListener("pointerup", this.onUp);
+      if (!this.cardEl) return;
+      var card = fit(this.el, readCard(this.cardEl));
+      applyCard(this.cardEl, card);
+      this.cardEl.classList.remove("is-moving");
+      this.pushEvent("place_card", {
+        id: card.id,
+        col: card.col,
+        row: card.row,
+        size_x: card.sx,
+        size_y: card.sy
+      });
+      this.cardEl = null;
+      this.mode = null;
+    }
+  };
+
   var csrf = document.querySelector("meta[name='csrf-token']");
   var token = csrf ? csrf.getAttribute("content") : "";
   var liveSocket = new LiveView.LiveSocket("/live", Phoenix.Socket, {
     params: { _csrf_token: token },
-    hooks: { SqlEditor: SqlEditor, ResultDownload: ResultDownload, Passkey: Passkey }
+    hooks: { SqlEditor: SqlEditor, ResultDownload: ResultDownload, Passkey: Passkey, DashBoard: DashBoard }
   });
   liveSocket.connect();
   window.liveSocket = liveSocket;

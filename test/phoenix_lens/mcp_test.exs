@@ -46,6 +46,7 @@ defmodule PhoenixLens.MCPTest do
     assert "run_sql" in names
     assert "save_question" in names
     assert "pin_question" in names
+    assert "layout_dashboard" in names
     assert "set_engine" in names
     assert "add_protection" in names
     assert "create_alert" in names

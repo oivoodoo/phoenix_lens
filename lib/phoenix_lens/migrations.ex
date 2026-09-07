@@ -39,6 +39,10 @@ defmodule PhoenixLens.Migrations do
       question_id bigint NOT NULL REFERENCES phoenix_lens_questions(id) ON DELETE CASCADE,
       position int NOT NULL,
       date_column text,
+      col int NOT NULL DEFAULT 0,
+      row int NOT NULL DEFAULT 0,
+      size_x int NOT NULL DEFAULT 6,
+      size_y int NOT NULL DEFAULT 5,
       inserted_at timestamp(6) NOT NULL DEFAULT now()
     )
     """)
@@ -68,6 +72,7 @@ defmodule PhoenixLens.Migrations do
       "CREATE INDEX IF NOT EXISTS phoenix_lens_audit_query_hash_idx ON phoenix_lens_audit (query_hash)"
     )
 
+    Ecto.Migration.execute(PhoenixLens.Dashboards.layout_alter_sql())
     Ecto.Migration.execute(PhoenixLens.Settings.settings_sql())
     Ecto.Migration.execute(PhoenixLens.Settings.settings_alter_sql())
     Ecto.Migration.execute(PhoenixLens.Settings.sources_sql())

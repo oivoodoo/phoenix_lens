@@ -62,7 +62,7 @@ Replace the URL with your host (`https://app.example.com/lens/mcp`). Protocol: S
 | `list_questions`, `get_question`, `save_question`, `delete_question` | Questions |
 | `export_csv`, `export_json` | Export |
 | `list_dashboards`, `get_dashboard`, `save_dashboard`, `delete_dashboard` | Dashboards |
-| `pin_question`, `unpin_card`, `run_dashboard` | Pin / open dashboard |
+| `pin_question`, `unpin_card`, `layout_dashboard`, `run_dashboard` | Pin / arrange / open dashboard |
 | `list_audit` | Audit |
 | `get_settings`, `set_engine`, `set_audit_retention`, `reconnect_engine` | Settings → Engine |
 | `add_source`, `remove_source` | Extra DuckDB sources |

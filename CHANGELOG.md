@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.4
+
+- Dashboard **Edit** mode: drag cards to move them and resize on a 12-column board, then Save.
+- Date-range filter bar with space between title, filters, and cards.
+
 ## 0.1.3
 
 - MCP server at `/lens/mcp` (Streamable HTTP JSON-RPC) covering catalog, SQL, questions, dashboards, audit, engines, sources, and column protection.

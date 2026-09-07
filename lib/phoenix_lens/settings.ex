@@ -281,6 +281,7 @@ defmodule PhoenixLens.Settings do
         PhoenixLens.Integrations.ensure_table()
         PhoenixLens.Alerts.ensure_table()
         PhoenixLens.Auth.ensure_tables()
+        PhoenixLens.Dashboards.ensure_layout()
         :ok
     end
   rescue

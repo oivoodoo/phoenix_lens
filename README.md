@@ -8,7 +8,7 @@ This is not Metabase. It is the PgHero-shaped tool you mount at `/lens` so you c
 
 ```elixir
 def deps do
-  [{:phoenix_lens, "~> 0.1.3"}]
+  [{:phoenix_lens, "~> 0.1.4"}]
 end
 ```
 
@@ -63,7 +63,7 @@ DuckDB is optional. Add the NIF to the **host** app (the dummy app already does)
 ```elixir
 def deps do
   [
-    {:phoenix_lens, "~> 0.1.3"},
+    {:phoenix_lens, "~> 0.1.4"},
     {:duckdbex, "~> 0.4"}
   ]
 end
