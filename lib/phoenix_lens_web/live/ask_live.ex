@@ -122,91 +122,109 @@ defmodule PhoenixLensWeb.AskLive do
   end
 
   def handle_event("add_filter", _params, socket) do
-    nb =
-      update_in(
-        socket.assigns.notebook.filters,
-        &(&1 ++ [new_filter(&1, socket.assigns.columns)])
-      )
-
-    {:noreply, put_notebook(socket, nb)}
+    {:noreply,
+     update_notebook(socket, fn nb ->
+       %{nb | filters: nb.filters ++ [new_filter(nb.filters, socket.assigns.columns)]}
+     end)}
   end
 
   def handle_event("remove_filter", %{"id" => id}, socket) do
     id = String.to_integer(id)
-    nb = update_in(socket.assigns.notebook.filters, &Enum.reject(&1, fn f -> f.id == id end))
-    {:noreply, put_notebook(socket, nb)}
+
+    {:noreply,
+     update_notebook(socket, fn nb ->
+       %{nb | filters: Enum.reject(nb.filters, fn f -> f.id == id end)}
+     end)}
   end
 
   def handle_event("update_filter", params, socket) do
     id = (params["filter_id"] || params["id"]) |> to_string() |> String.to_integer()
 
-    nb =
-      update_in(socket.assigns.notebook.filters, fn filters ->
-        Enum.map(filters, fn f ->
-          if f.id == id,
-            do: %{
-              f
-              | column: params["column"] || f.column,
-                op: params["op"] || f.op,
-                value: params["value"] || f.value
-            },
-            else: f
-        end)
-      end)
+    {:noreply,
+     update_notebook(socket, fn nb ->
+       filters =
+         Enum.map(nb.filters, fn f ->
+           if f.id == id do
+             %{
+               f
+               | column: params["column"] || f.column,
+                 op: params["op"] || f.op,
+                 value: params["value"] || f.value
+             }
+           else
+             f
+           end
+         end)
 
-    {:noreply, put_notebook(socket, nb)}
+       %{nb | filters: filters}
+     end)}
   end
 
   def handle_event("add_agg", _params, socket) do
-    nb =
-      update_in(socket.assigns.notebook.aggregations, fn aggs ->
-        aggs ++ [%{id: next_id(aggs), fun: "count", column: nil}]
-      end)
-
-    {:noreply, put_notebook(socket, nb)}
+    {:noreply,
+     update_notebook(socket, fn nb ->
+       %{
+         nb
+         | aggregations:
+             nb.aggregations ++ [%{id: next_id(nb.aggregations), fun: "count", column: nil}]
+       }
+     end)}
   end
 
   def handle_event("remove_agg", %{"id" => id}, socket) do
     id = String.to_integer(id)
-    nb = update_in(socket.assigns.notebook.aggregations, &Enum.reject(&1, fn a -> a.id == id end))
-    {:noreply, put_notebook(socket, nb)}
+
+    {:noreply,
+     update_notebook(socket, fn nb ->
+       %{nb | aggregations: Enum.reject(nb.aggregations, fn a -> a.id == id end)}
+     end)}
   end
 
   def handle_event("update_agg", params, socket) do
     id = (params["agg_id"] || params["id"]) |> to_string() |> String.to_integer()
 
-    nb =
-      update_in(socket.assigns.notebook.aggregations, fn aggs ->
-        Enum.map(aggs, fn a ->
-          if a.id == id do
-            fun = params["fun"] || a.fun
-            col = if fun == "count", do: nil, else: params["column"] || a.column
-            %{a | fun: fun, column: col}
-          else
-            a
-          end
-        end)
-      end)
+    {:noreply,
+     update_notebook(socket, fn nb ->
+       aggs =
+         Enum.map(nb.aggregations, fn a ->
+           if a.id == id do
+             fun = params["fun"] || a.fun
+             col = if fun == "count", do: nil, else: params["column"] || a.column
+             %{a | fun: fun, column: col}
+           else
+             a
+           end
+         end)
 
-    {:noreply, put_notebook(socket, nb)}
+       %{nb | aggregations: aggs}
+     end)}
   end
 
   def handle_event("add_breakout", _params, socket) do
     col = socket.assigns.columns |> List.first() |> then(&(&1 && &1.name))
-    nb = update_in(socket.assigns.notebook.breakouts, &(&1 ++ List.wrap(col)))
-    {:noreply, put_notebook(socket, nb)}
+
+    {:noreply,
+     update_notebook(socket, fn nb ->
+       %{nb | breakouts: nb.breakouts ++ List.wrap(col)}
+     end)}
   end
 
   def handle_event("remove_breakout", %{"index" => index}, socket) do
     i = String.to_integer(index)
-    nb = update_in(socket.assigns.notebook.breakouts, &List.delete_at(&1, i))
-    {:noreply, put_notebook(socket, nb)}
+
+    {:noreply,
+     update_notebook(socket, fn nb ->
+       %{nb | breakouts: List.delete_at(nb.breakouts, i)}
+     end)}
   end
 
   def handle_event("update_breakout", %{"index" => index, "column" => col}, socket) do
     i = String.to_integer(index)
-    nb = update_in(socket.assigns.notebook.breakouts, &List.replace_at(&1, i, col))
-    {:noreply, put_notebook(socket, nb)}
+
+    {:noreply,
+     update_notebook(socket, fn nb ->
+       %{nb | breakouts: List.replace_at(nb.breakouts, i, col)}
+     end)}
   end
 
   def handle_event("set_limit", %{"limit" => limit}, socket) do
@@ -553,6 +571,10 @@ defmodule PhoenixLensWeb.AskLive do
       |> assign(:name, params["name"] || socket.assigns.name)
 
     {:noreply, execute_sql(socket, sql, database_id)}
+  end
+
+  defp update_notebook(socket, fun) when is_function(fun, 1) do
+    put_notebook(socket, fun.(socket.assigns.notebook))
   end
 
   defp put_notebook(socket, nb, cols \\ :keep) do

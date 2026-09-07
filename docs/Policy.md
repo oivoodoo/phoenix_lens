@@ -9,6 +9,7 @@ Merged, case-insensitive exact identifiers:
 1. `config :phoenix_lens, masked_fields: [:email, :first_name, ...]`
 2. `masked_fields_by_source` per database id
 3. Every Ecto schema field with `redact: true` on the metadata repo's OTP app
+4. Runtime rules from **Settings → Column protection**: global names, per source, and per table
 
 `redact: true` on `User.email` also masks a result column named `email` on other tables. That is intentional in v1.
 

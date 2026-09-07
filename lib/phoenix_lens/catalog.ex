@@ -1,7 +1,7 @@
 defmodule PhoenixLens.Catalog do
   @moduledoc false
 
-  alias PhoenixLens.{Config, Policy}
+  alias PhoenixLens.{Config, Policy, Protection}
 
   def schemas do
     config = Config.get()
@@ -115,7 +115,8 @@ defmodule PhoenixLens.Catalog do
             name: name,
             type: types[field],
             protected:
-              MapSet.member?(protected, String.downcase(name)) or MapSet.member?(redact, name)
+              MapSet.member?(protected, String.downcase(name)) or MapSet.member?(redact, name) or
+                Protection.column_protected?(name, "primary", source)
           }
         end),
       associations: associations(mod)
@@ -132,7 +133,9 @@ defmodule PhoenixLens.Catalog do
           %{
             name: col.name,
             type: col.type,
-            protected: MapSet.member?(protected, String.downcase(col.name))
+            protected:
+              MapSet.member?(protected, String.downcase(col.name)) or
+                Protection.column_protected?(col.name, table[:database] || "primary", table.name)
           }
         end),
       associations: []

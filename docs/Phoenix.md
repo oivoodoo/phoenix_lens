@@ -7,7 +7,7 @@ Add PhoenixLens to `mix.exs`:
 ```elixir
 def deps do
   [
-    {:phoenix_lens, "~> 0.1.0"}
+    {:phoenix_lens, "~> 0.1.1"}
   ]
 end
 ```
@@ -78,6 +78,8 @@ config :phoenix_lens,
 ```
 
 Questions, dashboards, settings, and the audit log always persist on `repo:`. Point the query target at a **read replica** when you can. Audit is paginated; Settings sets how long rows are kept (7–365 days, or forever). Default is 90 days.
+
+**Column protection** (`/lens/settings/protection`) adds runtime masks on top of `masked_fields` and Ecto `redact: true`: globally, per database/source, or per table.
 
 ## DuckDB engine
 

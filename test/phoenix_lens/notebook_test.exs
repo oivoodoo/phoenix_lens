@@ -62,6 +62,13 @@ defmodule PhoenixLens.NotebookTest do
     assert {:error, _} = Notebook.to_sql(nb)
   end
 
+  test "adding a filter keeps a notebook struct" do
+    nb = %Notebook{table: "posts", filters: []}
+    nb = %{nb | filters: nb.filters ++ [%{id: 1, column: "status", op: "=", value: "published"}]}
+    assert {:ok, sql} = Notebook.to_sql(nb)
+    assert sql =~ ~s[WHERE "status" = 'published']
+  end
+
   test "quotes dotted DuckDB table names" do
     nb = %Notebook{table: "repo.users", limit: 10}
     assert {:ok, sql} = Notebook.to_sql(nb)

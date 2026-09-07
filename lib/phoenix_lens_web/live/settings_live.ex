@@ -9,6 +9,7 @@ defmodule PhoenixLensWeb.SettingsLive do
     {:ok,
      socket
      |> assign(:page, :settings)
+     |> assign(:section, :engine)
      |> assign(:page_title, "Settings · Lens")
      |> assign(:source_modal, false)
      |> assign(:source_error, nil)
@@ -140,6 +141,8 @@ defmodule PhoenixLensWeb.SettingsLive do
           </p>
         </div>
       </header>
+
+      <PhoenixLensWeb.Components.SettingsNav.bar lens_prefix={@lens_prefix} section={@section} />
 
       <section class="lens-dash-card">
         <header class="lens-card-head">

@@ -38,12 +38,19 @@ defmodule PhoenixLens.QueryTest do
       )
 
     previous = Application.get_all_env(:phoenix_lens)
+    previous_rules = :persistent_term.get({PhoenixLens.Protection, :rules}, :miss)
+
+    :persistent_term.put(
+      {PhoenixLens.Protection, :rules},
+      %{global: MapSet.new(), sources: %{}, tables: %{}}
+    )
 
     on_exit(fn ->
       for {key, _} <- Application.get_all_env(:phoenix_lens),
           do: Application.delete_env(:phoenix_lens, key)
 
       for {key, value} <- previous, do: Application.put_env(:phoenix_lens, key, value)
+      :persistent_term.put({PhoenixLens.Protection, :rules}, previous_rules)
     end)
 
     Application.delete_env(:phoenix_lens, :databases)
@@ -83,6 +90,90 @@ defmodule PhoenixLens.QueryTest do
     assert count == 1
   end
 
+  test "runtime global protection masks the column" do
+    Application.put_env(:phoenix_lens, :masked_fields, [])
+
+    put_protection_rules(%{
+      global: MapSet.new(["inserted_at"]),
+      sources: %{},
+      tables: %{}
+    })
+
+    assert {:ok, result} = Query.run("SELECT id, inserted_at FROM lens_users")
+    assert "inserted_at" in result.masked_columns
+    assert Enum.at(hd(result.rows), 1) == :redacted
+    assert hd(hd(result.rows)) != :redacted
+  end
+
+  test "runtime table protection masks only that table" do
+    Application.put_env(:phoenix_lens, :masked_fields, [])
+
+    put_protection_rules(%{
+      global: MapSet.new(),
+      sources: %{},
+      tables: %{{"primary", "lens_users"} => MapSet.new(["inserted_at"])}
+    })
+
+    assert {:ok, result} = Query.run("SELECT id, inserted_at FROM lens_users")
+    assert "inserted_at" in result.masked_columns
+    assert Enum.at(hd(result.rows), 1) == :redacted
+  end
+
+  test "runtime table protection does not mask the same name from another table" do
+    Application.put_env(:phoenix_lens, :masked_fields, [])
+
+    put_protection_rules(%{
+      global: MapSet.new(),
+      sources: %{},
+      tables: %{{"primary", "posts"} => MapSet.new(["inserted_at"])}
+    })
+
+    assert {:ok, result} = Query.run("SELECT id, inserted_at FROM lens_users")
+    refute "inserted_at" in result.masked_columns
+    refute Enum.at(hd(result.rows), 1) == :redacted
+  end
+
+  test "runtime source protection applies on that database id" do
+    Application.put_env(:phoenix_lens, :masked_fields, [])
+
+    put_protection_rules(%{
+      global: MapSet.new(),
+      sources: %{"primary" => MapSet.new(["inserted_at"])},
+      tables: %{}
+    })
+
+    assert {:ok, result} = Query.run("SELECT inserted_at FROM lens_users")
+    assert "inserted_at" in result.masked_columns
+    assert hd(hd(result.rows)) == :redacted
+  end
+
+  test "runtime source protection does not apply to another source" do
+    Application.put_env(:phoenix_lens, :masked_fields, [])
+
+    put_protection_rules(%{
+      global: MapSet.new(),
+      sources: %{"warehouse" => MapSet.new(["inserted_at"])},
+      tables: %{}
+    })
+
+    assert {:ok, result} = Query.run("SELECT inserted_at FROM lens_users")
+    refute "inserted_at" in result.masked_columns
+  end
+
+  test "aliased protected attribute is still masked" do
+    Application.put_env(:phoenix_lens, :masked_fields, [])
+
+    put_protection_rules(%{
+      global: MapSet.new(["email"]),
+      sources: %{},
+      tables: %{}
+    })
+
+    assert {:ok, result} = Query.run("SELECT email AS contact FROM lens_users")
+    assert "contact" in result.masked_columns
+    refute inspect(result.rows) =~ "alice@example.com"
+  end
+
   test "row cap sets truncated" do
     Application.put_env(:phoenix_lens, :max_rows, 0)
 
@@ -91,6 +182,10 @@ defmodule PhoenixLens.QueryTest do
     assert result.rows == []
 
     Application.put_env(:phoenix_lens, :max_rows, 10_000)
+  end
+
+  defp put_protection_rules(rules) do
+    :persistent_term.put({PhoenixLens.Protection, :rules}, rules)
   end
 
   defp postgrex_opts(url) do

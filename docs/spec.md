@@ -2,7 +2,7 @@
 
 Living spec. Idea one-pager: `docs/ideas/lens.md` (workspace root). ADRs: `docs/decisions/`.
 
-**Status:** v0.1.0 implemented in this directory. This spec remains the contract.
+**Status:** v0.1.1 implemented in this directory. This spec remains the contract.
 
 ## Assumptions (correct these before coding)
 

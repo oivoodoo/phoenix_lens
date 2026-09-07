@@ -875,6 +875,69 @@ button.icon {
 code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
 
 .lens-settings { display: flex; flex-direction: column; gap: 20px; }
+.lens-settings-nav {
+  display: flex;
+  gap: 6px;
+  margin: -8px 0 8px;
+}
+.lens-settings-nav a {
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-weight: 700;
+  color: var(--text);
+  background: #fff;
+  border: 1px solid var(--line-strong);
+  text-decoration: none;
+}
+.lens-settings-nav a:hover { background: var(--bg); text-decoration: none; }
+.lens-settings-nav a.active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+.lens-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+  min-height: 32px;
+  align-items: center;
+}
+.lens-protect-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+  border-radius: 999px;
+  padding: 4px 8px 4px 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.lens-protect-chip.is-locked {
+  background: #eef2f5;
+  color: var(--text);
+  padding-right: 10px;
+}
+.lens-protect-chip .icon { width: 22px; height: 22px; border: 0; background: transparent; color: var(--brand-dark); }
+.lens-protect-add {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.lens-protect-add .lens-field { min-width: 180px; }
+.lens-protect-cols { list-style: none; padding: 0; margin: 12px 0 0; }
+.lens-protect-cols li { border-bottom: 1px solid var(--line); }
+.lens-protect-cols label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  cursor: pointer;
+}
+.lens-protect-cols input { margin: 0; }
 .lens-engine-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

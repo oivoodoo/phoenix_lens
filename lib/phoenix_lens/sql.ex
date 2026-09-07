@@ -62,6 +62,43 @@ defmodule PhoenixLens.SQL do
     end
   end
 
+  @doc """
+  Table references from FROM / JOIN, including optional source qualifiers.
+  """
+  def table_refs(sql) when is_binary(sql) do
+    sql
+    |> strip_comments()
+    |> String.replace(~r/'([^']|'')*'/, "''")
+    |> then(
+      &Regex.scan(
+        ~r/(?:FROM|JOIN)\s+((?:"[^"]+"|[A-Za-z_][A-Za-z0-9_]*)(?:\s*\.\s*(?:"[^"]+"|[A-Za-z_][A-Za-z0-9_]*)){0,2})/i,
+        &1
+      )
+    )
+    |> Enum.map(fn [_, ref] -> parse_table_ref(ref) end)
+    |> Enum.reject(&is_nil(&1.table))
+    |> Enum.uniq()
+  end
+
+  def table_refs(_), do: []
+
+  defp parse_table_ref(ref) do
+    parts =
+      ref
+      |> String.replace("\"", "")
+      |> String.split(".")
+      |> Enum.map(&String.trim/1)
+      |> Enum.reject(&(&1 == ""))
+      |> Enum.map(&String.downcase/1)
+
+    case parts do
+      [table] -> %{source: nil, table: table}
+      [source, table] -> %{source: source, table: table}
+      [source, _schema, table] -> %{source: source, table: table}
+      _ -> %{source: nil, table: nil}
+    end
+  end
+
   def first_keyword(sql) do
     case Regex.run(~r/\A([A-Za-z]+)/, strip_comments(sql) |> String.trim()) do
       [_, word] -> String.upcase(word)

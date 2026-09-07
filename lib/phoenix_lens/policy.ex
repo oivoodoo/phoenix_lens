@@ -32,16 +32,25 @@ defmodule PhoenixLens.Policy do
     {columns, rows, masked_names}
   end
 
-  def protected_set(config, database_id \\ "primary") do
+  def protected_set(config, database_id \\ "primary", opts \\ [])
+
+  def protected_set(config, database_id, opts) when is_list(opts) do
     global = names(config.masked_fields)
     by_source = names(Map.get(config.masked_fields_by_source, database_id, []))
     by_source_atom = names(Map.get(config.masked_fields_by_source, to_string(database_id), []))
     redact = names(redact_fields(config))
+    tables = opts[:tables] || PhoenixLens.SQL.table_refs(opts[:sql] || "")
+    runtime = PhoenixLens.Protection.names(database_id, tables)
 
     global
     |> MapSet.union(by_source)
     |> MapSet.union(by_source_atom)
     |> MapSet.union(redact)
+    |> MapSet.union(runtime)
+  end
+
+  def protected_set(config, database_id, sql) when is_binary(sql) do
+    protected_set(config, database_id, sql: sql)
   end
 
   def redact_fields(config) do

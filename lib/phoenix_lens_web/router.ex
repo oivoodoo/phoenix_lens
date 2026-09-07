@@ -51,6 +51,7 @@ defmodule PhoenixLensWeb.Router do
           live "/dashboards/:id", PhoenixLensWeb.DashboardLive, :show
           live "/audit", PhoenixLensWeb.AuditLive, :index
           live "/settings", PhoenixLensWeb.SettingsLive, :index
+          live "/settings/protection", PhoenixLensWeb.ProtectionLive, :index
         end
       end
     end

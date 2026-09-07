@@ -1,9 +1,21 @@
 defmodule PhoenixLens.PolicyTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
-  alias PhoenixLens.Policy
+  alias PhoenixLens.{Policy, Protection}
 
   @protected MapSet.new(["email", "first_name"])
+  @empty_rules %{global: MapSet.new(), sources: %{}, tables: %{}}
+
+  setup do
+    previous = :persistent_term.get({Protection, :rules}, :miss)
+    :persistent_term.put({Protection, :rules}, @empty_rules)
+
+    on_exit(fn ->
+      :persistent_term.put({Protection, :rules}, previous)
+    end)
+
+    :ok
+  end
 
   test "masks a column named email" do
     columns = [%{name: "email", origin: "email", computed?: false}]

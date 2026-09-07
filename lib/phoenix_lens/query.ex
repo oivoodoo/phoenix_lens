@@ -152,7 +152,7 @@ defmodule PhoenixLens.Query do
   end
 
   defp apply_policy(raw, sql, config, database_id, duration) do
-    protected = Policy.protected_set(config, database_id)
+    protected = Policy.protected_set(config, database_id, sql: sql)
     origins = SQL.column_origins(sql, raw.columns)
     {_cols, rows, masked} = Policy.apply(origins, raw.rows, protected, sql)
 

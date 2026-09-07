@@ -45,6 +45,16 @@ defmodule PhoenixLens.SQLTest do
     assert {:ok, _} = SQL.validate("-- delete everything\nSELECT 1")
   end
 
+  test "table_refs reads FROM and JOIN" do
+    refs = SQL.table_refs("SELECT * FROM users u JOIN repo.orders o ON o.user_id = u.id")
+    assert %{source: nil, table: "users"} in refs
+    assert %{source: "repo", table: "orders"} in refs
+  end
+
+  test "table_refs keeps quoted identifiers" do
+    assert [%{table: "comments"}] = SQL.table_refs(~s[SELECT * FROM "comments" LIMIT 100])
+  end
+
   test "describe_item extracts alias origin" do
     assert {"contact", "email", false} = SQL.describe_item("email AS contact")
     assert {"email", "email", false} = SQL.describe_item("users.email")
