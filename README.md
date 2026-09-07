@@ -4,6 +4,50 @@ Mountable SQL notebook for Phoenix. Point it at your Ecto Repo, save questions, 
 
 This is not Metabase. It is the PgHero-shaped tool you mount at `/lens` so you can stop giving a sidecar JVM a god-mode DB user.
 
+## UI
+
+Dummy app on [http://localhost:4000/lens](http://localhost:4000/lens). Full tour: [docs/Guide.md](docs/Guide.md).
+
+![Home](docs/images/home.png)
+
+Home: table x-rays and pinned dashboards.
+
+![Native SQL with masked cells](docs/images/ask-sql.png)
+
+Native query: `email AS contact` is still `[redacted]`.
+
+![Notebook](docs/images/ask-notebook.png)
+
+Notebook: filters, metrics, grouping, then a chart.
+
+![Dashboard](docs/images/dashboard.png)
+
+Dashboard: cards on a 12-column board. **Edit** to drag and resize.
+
+![Catalog](docs/images/catalog.png)
+
+Data catalog, with protected columns marked.
+
+![Settings](docs/images/settings-postgresql.png)
+
+Settings: PostgreSQL or DuckDB, extra sources, audit retention.
+
+![Column protection](docs/images/settings-protection.png)
+
+Column protection on top of `masked_fields` and Ecto `redact: true`.
+
+![MCP tokens](docs/images/settings-mcp.png)
+
+MCP project tokens for agents.
+
+![Alerts](docs/images/question-alert.png)
+
+Alerts on a saved question (email or webhook).
+
+![Security](docs/images/settings-security.png)
+
+Optional authenticator app and passkeys.
+
 ## Install
 
 ```elixir
