@@ -5,7 +5,16 @@ defmodule PhoenixLens.SQL do
     insert update delete merge drop alter create grant revoke truncate
     copy call do listen notify vacuum reindex cluster lock
     attach detach install load export import pragma checkpoint
+    upsert unload overwrite undrop
   )
+
+  @write_heads ~w(
+    INSERT UPDATE DELETE MERGE DROP ALTER CREATE GRANT REVOKE TRUNCATE
+    COPY CALL REPLACE UPSERT UNLOAD ATTACH DETACH INSTALL LOAD
+    VACUUM REINDEX CLUSTER LOCK BEGIN COMMIT ROLLBACK DECLARE
+  )
+
+  @write_message "Lens is view-only. DELETE, UPDATE, INSERT, and other writes are not allowed."
 
   @doc """
   Normalize and reject anything that is not a single read-only statement.
@@ -22,26 +31,33 @@ defmodule PhoenixLens.SQL do
 
       true ->
         body = String.trim_trailing(stripped, ";") |> String.trim()
-        keyword = first_keyword(body)
-
-        cond do
-          keyword in ["SELECT", "WITH"] and not forbidden?(body) ->
-            {:ok, body}
-
-          keyword == "EXPLAIN" ->
-            validate_explain(body)
-
-          true ->
-            {:error,
-             %PhoenixLens.Error{
-               message: "only SELECT / WITH (or EXPLAIN of those) is allowed",
-               kind: :read_only
-             }}
-        end
+        classify(body)
     end
   end
 
   def validate(_), do: {:error, %PhoenixLens.Error{message: "SQL is empty", kind: :sql}}
+
+  defp classify(body) do
+    keyword = first_keyword(body)
+
+    cond do
+      keyword in @write_heads or forbidden?(body) or locking_clause?(body) ->
+        {:error, %PhoenixLens.Error{message: @write_message, kind: :read_only}}
+
+      keyword in ["SELECT", "WITH"] ->
+        {:ok, body}
+
+      keyword == "EXPLAIN" ->
+        validate_explain(body)
+
+      true ->
+        {:error,
+         %PhoenixLens.Error{
+           message: "only SELECT / WITH (or EXPLAIN of those) is allowed",
+           kind: :read_only
+         }}
+    end
+  end
 
   defp validate_explain(body) do
     rest =
@@ -51,7 +67,7 @@ defmodule PhoenixLens.SQL do
 
     inner = first_keyword(rest)
 
-    if inner in ["SELECT", "WITH"] and not forbidden?(rest) do
+    if inner in ["SELECT", "WITH"] and not forbidden?(rest) and not locking_clause?(rest) do
       {:ok, body}
     else
       {:error,
@@ -112,6 +128,15 @@ defmodule PhoenixLens.SQL do
     Enum.any?(@forbidden, fn word ->
       Regex.match?(~r/(^|[^A-Za-z0-9_])#{word}([^A-Za-z0-9_]|$)/i, text)
     end) or Regex.match?(~r/(^|[^A-Za-z0-9_])into([^A-Za-z0-9_]|$)/i, text)
+  end
+
+  def locking_clause?(sql) do
+    text = strip_strings(strip_comments(sql))
+
+    Regex.match?(
+      ~r/(^|[^A-Za-z0-9_])for\s+(no\s+key\s+)?(update|share|key\s+share)([^A-Za-z0-9_]|$)/i,
+      text
+    )
   end
 
   def extra_statement?(sql) do

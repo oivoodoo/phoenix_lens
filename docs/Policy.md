@@ -36,8 +36,11 @@ Masked cells are the atom `:redacted`, rendered `[redacted]`, including CSV, emb
 
 ## Query guards
 
+Lens is **view-only**. User SQL cannot change application rows.
+
 - One statement
-- `SELECT` / `WITH` only (optional `EXPLAIN`)
-- `SET LOCAL transaction_read_only = on`
+- `SELECT` / `WITH` only (optional `EXPLAIN` of those)
+- `DELETE`, `UPDATE`, `INSERT`, `MERGE`, `TRUNCATE`, writable CTEs, and `SELECT … FOR UPDATE` are rejected
+- Postgres: `SET LOCAL transaction_read_only = on` so a slipped write still errors
 - `statement_timeout` (default 5s)
 - Hard row cap (default 10_000)

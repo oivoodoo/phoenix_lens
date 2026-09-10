@@ -1,7 +1,7 @@
 defmodule PhoenixLens.MixProject do
   use Mix.Project
 
-  @version "0.1.4"
+  @version "0.1.5"
   @source_url "https://github.com/oivoodoo/phoenix_lens"
   @docs_url "https://hexdocs.pm/phoenix_lens"
   @pages_url "https://oivoodoo.github.io/phoenix_lens"

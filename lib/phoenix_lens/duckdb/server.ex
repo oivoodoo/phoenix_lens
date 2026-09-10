@@ -90,7 +90,10 @@ defmodule PhoenixLens.DuckDB.Server do
   end
 
   def handle_call({:query, sql}, _from, %{status: :ready, conn: conn} = state) do
-    {:reply, DuckDB.query(conn, sql), state}
+    case PhoenixLens.SQL.validate(sql) do
+      {:ok, sql} -> {:reply, DuckDB.query(conn, sql), state}
+      {:error, error} -> {:reply, {:error, error}, state}
+    end
   end
 
   def handle_call({:query, _sql}, _from, %{status: :unavailable} = state) do

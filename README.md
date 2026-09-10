@@ -52,7 +52,7 @@ Optional authenticator app and passkeys.
 
 ```elixir
 def deps do
-  [{:phoenix_lens, "~> 0.1.4"}]
+  [{:phoenix_lens, "~> 0.1.5"}]
 end
 ```
 
@@ -81,7 +81,7 @@ defmodule MyApp.Repo.Migrations.AddPhoenixLens do
 end
 ```
 
-Then open `/lens`. Prefer a read replica. Product tour, query design, and dummy-app screenshots: [docs/Guide.md](docs/Guide.md). Mount details: [docs/Phoenix.md](docs/Phoenix.md). MCP server (agents): [docs/MCP.md](docs/MCP.md).
+Then open `/lens`. Prefer a read replica. Queries are **view-only**: `DELETE` / `UPDATE` / `INSERT` and other writes are rejected. Product tour, query design, and dummy-app screenshots: [docs/Guide.md](docs/Guide.md). Mount details: [docs/Phoenix.md](docs/Phoenix.md). MCP server (agents): [docs/MCP.md](docs/MCP.md).
 
 ## DuckDB engine
 
@@ -107,7 +107,7 @@ DuckDB is optional. Add the NIF to the **host** app (the dummy app already does)
 ```elixir
 def deps do
   [
-    {:phoenix_lens, "~> 0.1.4"},
+    {:phoenix_lens, "~> 0.1.5"},
     {:duckdbex, "~> 0.4"}
   ]
 end

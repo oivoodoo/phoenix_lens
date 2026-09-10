@@ -2,7 +2,7 @@
 
 Lens is a mountable Phoenix LiveView SQL notebook pointed at the host Ecto Repo. It is the PgHero-shaped tool you mount at `/lens`: ask a question, save it, pin it to a dashboard, and **mask PII/PHI in every output**.
 
-It is not Metabase. There is no sidecar JVM and no god-mode warehouse user. Queries are `SELECT` / `WITH` (optional `EXPLAIN`) only. Field policy runs on the grid, CSV, JSON, embeds, MCP tool results, and the audit log.
+It is not Metabase. There is no sidecar JVM and no god-mode warehouse user. Queries are **view-only**: `SELECT` / `WITH` (optional `EXPLAIN`) only — `DELETE`, `UPDATE`, and `INSERT` are rejected. Field policy runs on the grid, CSV, JSON, embeds, MCP tool results, and the audit log.
 
 This page is a tour of the product as it looks in the dummy app (`dummy/` on [http://localhost:4000/lens](http://localhost:4000/lens)), plus how queries are designed for **PostgreSQL** (default) and **DuckDB** (optional). Agents can drive the same notebook over **MCP** at `/lens/mcp`.
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.5
+
+- Tighten view-only SQL: reject `UPDATE`, writable CTEs, and `SELECT … FOR UPDATE` as well as `DELETE` / `INSERT`.
+- README UI screenshots from the dummy app.
+
 ## 0.1.4
 
 - Dashboard **Edit** mode: drag cards to move them and resize on a 12-column board, then Save.

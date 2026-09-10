@@ -22,7 +22,45 @@ defmodule PhoenixLens.SQLTest do
   end
 
   test "rejects DELETE" do
-    assert {:error, %{kind: :read_only}} = SQL.validate("DELETE FROM users")
+    assert {:error, %{kind: :read_only, message: message}} = SQL.validate("DELETE FROM users")
+    assert message =~ "view-only"
+  end
+
+  test "rejects UPDATE" do
+    assert {:error, %{kind: :read_only, message: message}} =
+             SQL.validate("UPDATE users SET name = 'x'")
+
+    assert message =~ "view-only"
+  end
+
+  test "rejects UPDATE with a leading comment" do
+    assert {:error, %{kind: :read_only}} =
+             SQL.validate("-- nbd\nUPDATE users SET name = 'x'")
+  end
+
+  test "rejects writable CTE DELETE" do
+    assert {:error, %{kind: :read_only}} =
+             SQL.validate("WITH t AS (DELETE FROM users RETURNING id) SELECT * FROM t")
+  end
+
+  test "rejects writable CTE UPDATE" do
+    assert {:error, %{kind: :read_only}} =
+             SQL.validate("WITH t AS (UPDATE users SET name = 'x' RETURNING id) SELECT * FROM t")
+  end
+
+  test "rejects SELECT FOR UPDATE" do
+    assert {:error, %{kind: :read_only}} = SQL.validate("SELECT * FROM users FOR UPDATE")
+  end
+
+  test "rejects MERGE" do
+    assert {:error, %{kind: :read_only}} =
+             SQL.validate(
+               "MERGE INTO users t USING src s ON t.id = s.id WHEN MATCHED THEN DELETE"
+             )
+  end
+
+  test "rejects TRUNCATE" do
+    assert {:error, %{kind: :read_only}} = SQL.validate("TRUNCATE users")
   end
 
   test "rejects ATTACH" do
@@ -39,6 +77,10 @@ defmodule PhoenixLens.SQLTest do
 
   test "does not treat 'updates' as UPDATE" do
     assert {:ok, _} = SQL.validate("SELECT * FROM updates")
+  end
+
+  test "does not treat last_updated as UPDATE" do
+    assert {:ok, _} = SQL.validate("SELECT last_updated FROM users")
   end
 
   test "strips comments before classifying" do
