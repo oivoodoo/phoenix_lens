@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.40.4">
+    <meta name="project" content="phoenix_lens v0.1.5">
+
+
+    <title>ADR-003: PostgreSQL only, prefer replica, hard timeout and row cap — phoenix_lens v0.1.5</title>
+
+    <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
+
+    <script defer src="dist/sidebar_items-43FC3EA9.js"></script>
+    <script defer src="docs_config.js"></script>
+    <script defer src="dist/html-MI33G4N7.js"></script>
+
+  </head>
+  <body>
+    <script>(()=>{var t="ex_doc:settings",e="dark";var o="dark",s="light";var E="sidebar_state",n="closed";var r="sidebar_width";var a="sidebar-open";var i=new URLSearchParams(window.location.search),S=i.get("theme")||JSON.parse(localStorage.getItem(t)||"{}").theme;(S===o||S!==s&&window.matchMedia("(prefers-color-scheme: dark)").matches)&&document.body.classList.add(e);var d=sessionStorage.getItem(E),A=d!==n&&!window.matchMedia(`screen and (max-width: ${768}px)`).matches;document.body.classList.toggle(a,A);var c=sessionStorage.getItem(r);c&&document.body.style.setProperty("--sidebarWidth",`${c}px`);var p=/(Macintosh|iPhone|iPad|iPod)/.test(window.navigator.userAgent);document.documentElement.classList.toggle("apple-os",p);})();
+</script>
+
+<div class="body-wrapper">
+
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
+
+<nav id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
+
+      <div>
+        <a href="https://oivoodoo.github.io/phoenix_lens" class="sidebar-projectName" translate="no">
+phoenix_lens
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v0.1.5
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-list-nav" class="sidebar-list-nav" role="tablist" data-extras="Pages"></ul>
+  </div>
+</nav>
+
+<output role="status" id="toast"></output>
+
+<main class="content page-extra" id="main" data-type="extras">
+  <div id="content" class="content-inner">
+    <div class="top-search">
+      <div class="search-settings">
+        <form class="search-bar" action="search.html">
+          <label class="search-label">
+            <span class="sr-only">Search documentation of phoenix_lens</span>
+            <div class="search-input-wrapper">
+              <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+              <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+                <i class="ri-close-line ri-lg" title="Cancel search"></i>
+              </button>
+            </div>
+          </label>
+        </form>
+        <div class="autocomplete">
+        </div>
+        <div class="engine-selector" data-multiple="false">
+          <button type="button" class="engine-button" aria-label="Select search engine" aria-haspopup="true" aria-expanded="false">
+            <i class="ri-search-2-line" aria-hidden="true"></i>
+            <span class="engine-name">Default</span>
+            <i class="ri-arrow-down-s-line" aria-hidden="true"></i>
+          </button>
+          <div class="engine-dropdown" hidden role="menu">
+
+              <button type="button"
+                      class="engine-option"
+                      data-engine-url="search.html?q="
+                      role="menuitemradio"
+                      aria-checked="true">
+                <span class="name">Default</span>
+                <span class="help">In-browser search</span>
+              </button>
+
+          </div>
+        </div>
+        <button class="icon-settings display-settings">
+          <i class="ri-settings-3-line"></i>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+
+<div id="top-content">
+  <div class="heading-with-actions top-heading">
+    <h1>ADR-003: PostgreSQL only, prefer replica, hard timeout and row cap</h1>
+
+<a href="003-postgres-read-replica-timeout.md" title="Copy Markdown (hold Ctrl/Cmd and click it to open as Markdown)" class="copy-markdown icon-action" rel="help">
+  <i class="ri-markdown-line" aria-hidden="true"></i>
+  <span class="sr-only">Copy Markdown</span>
+</a>
+
+
+      <a href="https://github.com/oivoodoo/phoenix_lens/blob/v0.1.5/docs/decisions/003-postgres-read-replica-timeout.md#L1" title="View Source" class="icon-action" rel="help nofollow">
+        <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        <span class="sr-only">View Source</span>
+      </a>
+
+  </div>
+
+
+<h2 id="status" class="section-heading"><a href="#status" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Status</span></h2><p>Accepted</p><h2 id="date" class="section-heading"><a href="#date" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Date</span></h2><p>2026-09-04</p><h2 id="context" class="section-heading"><a href="#context" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Context</span></h2><p>Lens executes analyst SQL against the host app’s data. The host Repo is typically the primary OLTP database. A Metabase-style <code class="inline">GROUP BY</code> on <code class="inline">events</code> can take down checkout. Origin-column masking also needs PostgreSQL <code class="inline">RowDescription</code> table OID + attnum.</p><p>PgHero already supports <code class="inline">repo:</code> and <code class="inline">url:</code> per named database, including replicas.</p><h2 id="decision" class="section-heading"><a href="#decision" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Decision</span></h2><ul><li>v1 dialect is <strong>PostgreSQL only</strong> (Postgrex). Other Ecto adapters are out of scope.</li><li>Config mirrors PgHero: <code class="inline">repo:</code> and/or <code class="inline">databases:</code> with optional <code class="inline">url:</code> for a read replica.</li><li>Every query runs in a checkout with <code class="inline">SET LOCAL transaction_read_only = on</code> and <code class="inline">SET LOCAL statement_timeout</code>.</li><li>Results are hard-capped (<code class="inline">max_rows</code>, default 10_000). Truncation is visible in the UI and the audit row.</li><li>README default is: point <code class="inline">/lens</code> at a replica, not the primary.</li></ul><h2 id="alternatives-considered" class="section-heading"><a href="#alternatives-considered" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Alternatives Considered</span></h2><h3 id="any-ecto-adapter" class="section-heading"><a href="#any-ecto-adapter" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Any Ecto adapter</span></h3><ul><li>Pros: MySQL/SQLite apps</li><li>Cons: Origin-column resolution and read-only transaction semantics differ; SQL editor implies a dialect</li><li>Rejected for v1.</li></ul><h3 id="no-timeout-trust-the-analyst" class="section-heading"><a href="#no-timeout-trust-the-analyst" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">No timeout; trust the analyst</span></h3><ul><li>Pros: Simpler</li><li>Cons: One forgotten <code class="inline">LIMIT</code> pages the on-call</li><li>Rejected.</li></ul><h2 id="consequences" class="section-heading"><a href="#consequences" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Consequences</span></h2><ul><li>Dummy app and CI use Postgres (same as PgHero)</li><li>MySQL users are told “not now” in the README</li><li>Statement timeout and row cap are part of the public config contract</li></ul>
+
+</div>
+
+<div class="bottom-actions" id="bottom-actions">
+  <div class="bottom-actions-item">
+
+      <a href="002-field-policy-on-every-sink.html" class="bottom-actions-button" rel="prev">
+        <span class="subheader">
+          ← Previous Page
+        </span>
+        <span class="title">
+ADR-002: Field policy on every result sink, not HTML-only masking
+        </span>
+      </a>
+
+  </div>
+  <div class="bottom-actions-item">
+
+      <a href="004-duckdb-engine.html" class="bottom-actions-button" rel="next">
+        <span class="subheader">
+          Next Page →
+        </span>
+        <span class="title">
+ADR-004: Optional DuckDB engine in front of Postgres and extra sources
+        </span>
+      </a>
+
+  </div>
+</div>
+    <footer class="footer">
+
+        <p>
+
+            <span class="line">
+              <a href="https://hex.pm/packages/phoenix_lens/0.1.5">Hex Package</a>
+
+              <a href="https://preview.hex.pm/preview/phoenix_lens/0.1.5">Hex Preview</a>
+
+                (<a href="https://preview.hex.pm/preview/phoenix_lens/0.1.5/show/docs/decisions/003-postgres-read-replica-timeout.md">current file</a>)
+
+            </span>
+
+          <span class="line">
+            <button class="a-main footer-button display-quick-switch" title="Go to package docs">
+              Go to package docs
+            </button>
+
+              <a href="llms.txt" target="_blank">
+                View llms.txt
+              </a>
+
+
+              <a href="phoenix_lens.epub">
+                Download ePub version
+              </a>
+
+          </span>
+        </p>
+
+        <p class="built-using">
+          Built using
+          <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.40.4) for the
+
+            <a href="https://elixir-lang.org" title="Elixir" target="_blank" translate="no">Elixir programming language</a>
+
+        </p>
+
+
+    </footer>
+  </div>
+</main>
+</div>
+
+  </body>
+</html>

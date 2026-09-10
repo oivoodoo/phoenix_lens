@@ -1,0 +1,58 @@
+# phoenix_lens v0.1.5 - Table of Contents
+
+> Mountable SQL notebook for Phoenix. Point it at your Ecto Repo, save questions, pin dashboards, and mask PII/PHI in every output.
+
+## Pages
+
+- [Lens (phoenix_lens)](readme.md)
+- [Changelog](changelog.md)
+
+- Guides
+  - [Guide](guide.md)
+  - [MCP](mcp.md)
+  - [Alerts](alerts.md)
+  - [Phoenix](phoenix.md)
+  - [Field policy](policy.md)
+  - [Permissions](permissions.md)
+
+- Decisions
+  - [ADR-001: In-process PgHero-shaped library, not a Metabase clone](001-in-process-not-a-metabase-clone.md)
+  - [ADR-002: Field policy on every result sink, not HTML-only masking](002-field-policy-on-every-sink.md)
+  - [ADR-003: PostgreSQL only, prefer replica, hard timeout and row cap](003-postgres-read-replica-timeout.md)
+  - [ADR-004: Optional DuckDB engine in front of Postgres and extra sources](004-duckdb-engine.md)
+
+## Modules
+
+- [PhoenixLens](PhoenixLens.md): Mountable SQL notebook for Phoenix.
+- [PhoenixLens.Alerts](PhoenixLens.Alerts.md): Saved-question alerts. Checked on a schedule; sent by email and/or webhook.
+
+- [PhoenixLens.Auth](PhoenixLens.Auth.md): Optional Lens lock: authenticator-app TOTP and WebAuthn passkeys.
+- [PhoenixLens.Components.QuestionCard](PhoenixLens.Components.QuestionCard.md): Embed a saved question in a host LiveView.
+- [PhoenixLens.Dashboards](PhoenixLens.Dashboards.md): Dashboards of saved questions.
+
+- [PhoenixLens.Integrations](PhoenixLens.Integrations.md): Email (SMTP) and webhook channels for alerts.
+
+- [PhoenixLens.MCP](PhoenixLens.MCP.md): JSON-RPC 2.0 MCP server for Lens (Streamable HTTP).
+- [PhoenixLens.Migrations](PhoenixLens.Migrations.md): Ecto migrations for questions, dashboards, and the audit log.
+- [PhoenixLens.Protection](PhoenixLens.Protection.md): Runtime column protection: global, per source, and per table.
+Additive to `config :phoenix_lens, masked_fields`.
+
+- [PhoenixLens.Questions](PhoenixLens.Questions.md): Saved SQL questions in the host Repo.
+
+- [PhoenixLens.Result](PhoenixLens.Result.md): A policy-applied query result. There is no unmasked variant.
+
+- [PhoenixLens.Settings](PhoenixLens.Settings.md): Runtime query engine and extra DuckDB sources, stored on the host Repo.
+
+- [PhoenixLens.Tokens](PhoenixLens.Tokens.md): Project tokens for the Lens MCP endpoint.
+- [PhoenixLensWeb.AssetController](PhoenixLensWeb.AssetController.md)
+- [PhoenixLensWeb.CSVController](PhoenixLensWeb.CSVController.md)
+- [PhoenixLensWeb.Plugs.MCP](PhoenixLensWeb.Plugs.MCP.md): Streamable HTTP MCP endpoint.
+- [PhoenixLensWeb.Router](PhoenixLensWeb.Router.md): Router helper for mounting Lens in a Phoenix application.
+
+- Exceptions
+  - [PhoenixLens.Error](PhoenixLens.Error.md): Error returned by `PhoenixLens.run/2`.
+
+## Mix Tasks
+
+- [mix phoenix_lens.server](Mix.Tasks.PhoenixLens.Server.md): Starts a standalone Lens dashboard.
+

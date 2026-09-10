@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.40.4">
+    <meta name="project" content="phoenix_lens v0.1.5">
+
+
+    <title>Field policy — phoenix_lens v0.1.5</title>
+
+    <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
+
+    <script defer src="dist/sidebar_items-43FC3EA9.js"></script>
+    <script defer src="docs_config.js"></script>
+    <script defer src="dist/html-MI33G4N7.js"></script>
+
+  </head>
+  <body>
+    <script>(()=>{var t="ex_doc:settings",e="dark";var o="dark",s="light";var E="sidebar_state",n="closed";var r="sidebar_width";var a="sidebar-open";var i=new URLSearchParams(window.location.search),S=i.get("theme")||JSON.parse(localStorage.getItem(t)||"{}").theme;(S===o||S!==s&&window.matchMedia("(prefers-color-scheme: dark)").matches)&&document.body.classList.add(e);var d=sessionStorage.getItem(E),A=d!==n&&!window.matchMedia(`screen and (max-width: ${768}px)`).matches;document.body.classList.toggle(a,A);var c=sessionStorage.getItem(r);c&&document.body.style.setProperty("--sidebarWidth",`${c}px`);var p=/(Macintosh|iPhone|iPad|iPod)/.test(window.navigator.userAgent);document.documentElement.classList.toggle("apple-os",p);})();
+</script>
+
+<div class="body-wrapper">
+
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
+
+<nav id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
+
+      <div>
+        <a href="https://oivoodoo.github.io/phoenix_lens" class="sidebar-projectName" translate="no">
+phoenix_lens
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v0.1.5
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-list-nav" class="sidebar-list-nav" role="tablist" data-extras="Pages"></ul>
+  </div>
+</nav>
+
+<output role="status" id="toast"></output>
+
+<main class="content page-extra" id="main" data-type="extras">
+  <div id="content" class="content-inner">
+    <div class="top-search">
+      <div class="search-settings">
+        <form class="search-bar" action="search.html">
+          <label class="search-label">
+            <span class="sr-only">Search documentation of phoenix_lens</span>
+            <div class="search-input-wrapper">
+              <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+              <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+                <i class="ri-close-line ri-lg" title="Cancel search"></i>
+              </button>
+            </div>
+          </label>
+        </form>
+        <div class="autocomplete">
+        </div>
+        <div class="engine-selector" data-multiple="false">
+          <button type="button" class="engine-button" aria-label="Select search engine" aria-haspopup="true" aria-expanded="false">
+            <i class="ri-search-2-line" aria-hidden="true"></i>
+            <span class="engine-name">Default</span>
+            <i class="ri-arrow-down-s-line" aria-hidden="true"></i>
+          </button>
+          <div class="engine-dropdown" hidden role="menu">
+
+              <button type="button"
+                      class="engine-option"
+                      data-engine-url="search.html?q="
+                      role="menuitemradio"
+                      aria-checked="true">
+                <span class="name">Default</span>
+                <span class="help">In-browser search</span>
+              </button>
+
+          </div>
+        </div>
+        <button class="icon-settings display-settings">
+          <i class="ri-settings-3-line"></i>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+
+<div id="top-content">
+  <div class="heading-with-actions top-heading">
+    <h1>Field policy</h1>
+
+<a href="policy.md" title="Copy Markdown (hold Ctrl/Cmd and click it to open as Markdown)" class="copy-markdown icon-action" rel="help">
+  <i class="ri-markdown-line" aria-hidden="true"></i>
+  <span class="sr-only">Copy Markdown</span>
+</a>
+
+
+      <a href="https://github.com/oivoodoo/phoenix_lens/blob/v0.1.5/docs/Policy.md#L1" title="View Source" class="icon-action" rel="help nofollow">
+        <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        <span class="sr-only">View Source</span>
+      </a>
+
+  </div>
+
+
+<p>Lens is designed so the <strong>dashboard path</strong> does not emit configured PII/PHI. It is not HIPAA or GDPR certified. You are the operator.</p><h2 id="what-is-protected" class="section-heading"><a href="#what-is-protected" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">What is protected</span></h2><p>Merged, case-insensitive exact identifiers:</p><ol><li><code class="inline">config :phoenix_lens, masked_fields: [:email, :first_name, ...]</code></li><li><code class="inline">masked_fields_by_source</code> per database id</li><li>Every Ecto schema field with <code class="inline">redact: true</code> on the metadata repo's OTP app</li><li>Runtime rules from <strong>Settings → Column protection</strong>: global names, per source, and per table</li></ol><p><code class="inline">redact: true</code> on <code class="inline">User.email</code> also masks a result column named <code class="inline">email</code> on other tables. That is intentional in v1.</p><h2 id="how-masking-is-applied" class="section-heading"><a href="#how-masking-is-applied" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">How masking is applied</span></h2><p>Every result goes through <code class="inline">PhoenixLens.Policy</code> before it leaves <code class="inline">PhoenixLens.Query</code>. There is no public unmasked run.</p><p>A column is masked when:</p><ul><li>the output name is protected (<code class="inline">SELECT email</code>), or</li><li>the origin identifier is protected (<code class="inline">SELECT email AS contact</code>), or</li><li>it is a computed expression whose SELECT item contains a protected identifier (<code class="inline">first_name || last_name</code>)</li></ul><p>Masked cells are the atom <code class="inline">:redacted</code>, rendered <code class="inline">[redacted]</code>, including CSV, embeds, the audit viewer, <strong>MCP tool results</strong>, and <strong>alert email/webhook payloads</strong>.</p><p><code class="inline">WHERE email = ...</code> is allowed. Quoted email/phone literals are redacted in stored SQL and in the audit log.</p><h2 id="threat-model-known-limits" class="section-heading"><a href="#threat-model-known-limits" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Threat model (known limits)</span></h2><ul><li><strong>IEx / <code class="inline">Repo.get</code></strong> — out of scope. This library polices the dashboard, not the BEAM.</li><li><strong>Subquery smuggling</strong> — <code class="inline">SELECT (SELECT email FROM users u2 WHERE u2.id = u.id)</code> may not resolve an origin. Treat as a reason to keep the mount admin-only.</li><li><strong>EXPLAIN</strong> — plan text can contain literals; it is still passed through the SQL redactor, not cell-level policy.</li><li><strong>Result logging</strong> — do not log <code class="inline">%PhoenixLens.Result{}</code> rows. The library does not.</li></ul><h2 id="query-guards" class="section-heading"><a href="#query-guards" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Query guards</span></h2><p>Lens is <strong>view-only</strong>. User SQL cannot change application rows.</p><ul><li>One statement</li><li><code class="inline">SELECT</code> / <code class="inline">WITH</code> only (optional <code class="inline">EXPLAIN</code> of those)</li><li><code class="inline">DELETE</code>, <code class="inline">UPDATE</code>, <code class="inline">INSERT</code>, <code class="inline">MERGE</code>, <code class="inline">TRUNCATE</code>, writable CTEs, and <code class="inline">SELECT … FOR UPDATE</code> are rejected</li><li>Postgres: <code class="inline">SET LOCAL transaction_read_only = on</code> so a slipped write still errors</li><li><code class="inline">statement_timeout</code> (default 5s)</li><li>Hard row cap (default 10_000)</li></ul>
+
+</div>
+
+<div class="bottom-actions" id="bottom-actions">
+  <div class="bottom-actions-item">
+
+      <a href="phoenix.html" class="bottom-actions-button" rel="prev">
+        <span class="subheader">
+          ← Previous Page
+        </span>
+        <span class="title">
+Phoenix
+        </span>
+      </a>
+
+  </div>
+  <div class="bottom-actions-item">
+
+      <a href="permissions.html" class="bottom-actions-button" rel="next">
+        <span class="subheader">
+          Next Page →
+        </span>
+        <span class="title">
+Permissions
+        </span>
+      </a>
+
+  </div>
+</div>
+    <footer class="footer">
+
+        <p>
+
+            <span class="line">
+              <a href="https://hex.pm/packages/phoenix_lens/0.1.5">Hex Package</a>
+
+              <a href="https://preview.hex.pm/preview/phoenix_lens/0.1.5">Hex Preview</a>
+
+                (<a href="https://preview.hex.pm/preview/phoenix_lens/0.1.5/show/docs/Policy.md">current file</a>)
+
+            </span>
+
+          <span class="line">
+            <button class="a-main footer-button display-quick-switch" title="Go to package docs">
+              Go to package docs
+            </button>
+
+              <a href="llms.txt" target="_blank">
+                View llms.txt
+              </a>
+
+
+              <a href="phoenix_lens.epub">
+                Download ePub version
+              </a>
+
+          </span>
+        </p>
+
+        <p class="built-using">
+          Built using
+          <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.40.4) for the
+
+            <a href="https://elixir-lang.org" title="Elixir" target="_blank" translate="no">Elixir programming language</a>
+
+        </p>
+
+
+    </footer>
+  </div>
+</main>
+</div>
+
+  </body>
+</html>

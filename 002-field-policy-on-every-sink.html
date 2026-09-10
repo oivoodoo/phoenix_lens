@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.40.4">
+    <meta name="project" content="phoenix_lens v0.1.5">
+
+
+    <title>ADR-002: Field policy on every result sink, not HTML-only masking — phoenix_lens v0.1.5</title>
+
+    <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
+
+    <script defer src="dist/sidebar_items-43FC3EA9.js"></script>
+    <script defer src="docs_config.js"></script>
+    <script defer src="dist/html-MI33G4N7.js"></script>
+
+  </head>
+  <body>
+    <script>(()=>{var t="ex_doc:settings",e="dark";var o="dark",s="light";var E="sidebar_state",n="closed";var r="sidebar_width";var a="sidebar-open";var i=new URLSearchParams(window.location.search),S=i.get("theme")||JSON.parse(localStorage.getItem(t)||"{}").theme;(S===o||S!==s&&window.matchMedia("(prefers-color-scheme: dark)").matches)&&document.body.classList.add(e);var d=sessionStorage.getItem(E),A=d!==n&&!window.matchMedia(`screen and (max-width: ${768}px)`).matches;document.body.classList.toggle(a,A);var c=sessionStorage.getItem(r);c&&document.body.style.setProperty("--sidebarWidth",`${c}px`);var p=/(Macintosh|iPhone|iPad|iPod)/.test(window.navigator.userAgent);document.documentElement.classList.toggle("apple-os",p);})();
+</script>
+
+<div class="body-wrapper">
+
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
+
+<nav id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
+
+      <div>
+        <a href="https://oivoodoo.github.io/phoenix_lens" class="sidebar-projectName" translate="no">
+phoenix_lens
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v0.1.5
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-list-nav" class="sidebar-list-nav" role="tablist" data-extras="Pages"></ul>
+  </div>
+</nav>
+
+<output role="status" id="toast"></output>
+
+<main class="content page-extra" id="main" data-type="extras">
+  <div id="content" class="content-inner">
+    <div class="top-search">
+      <div class="search-settings">
+        <form class="search-bar" action="search.html">
+          <label class="search-label">
+            <span class="sr-only">Search documentation of phoenix_lens</span>
+            <div class="search-input-wrapper">
+              <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+              <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+                <i class="ri-close-line ri-lg" title="Cancel search"></i>
+              </button>
+            </div>
+          </label>
+        </form>
+        <div class="autocomplete">
+        </div>
+        <div class="engine-selector" data-multiple="false">
+          <button type="button" class="engine-button" aria-label="Select search engine" aria-haspopup="true" aria-expanded="false">
+            <i class="ri-search-2-line" aria-hidden="true"></i>
+            <span class="engine-name">Default</span>
+            <i class="ri-arrow-down-s-line" aria-hidden="true"></i>
+          </button>
+          <div class="engine-dropdown" hidden role="menu">
+
+              <button type="button"
+                      class="engine-option"
+                      data-engine-url="search.html?q="
+                      role="menuitemradio"
+                      aria-checked="true">
+                <span class="name">Default</span>
+                <span class="help">In-browser search</span>
+              </button>
+
+          </div>
+        </div>
+        <button class="icon-settings display-settings">
+          <i class="ri-settings-3-line"></i>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+
+<div id="top-content">
+  <div class="heading-with-actions top-heading">
+    <h1>ADR-002: Field policy on every result sink, not HTML-only masking</h1>
+
+<a href="002-field-policy-on-every-sink.md" title="Copy Markdown (hold Ctrl/Cmd and click it to open as Markdown)" class="copy-markdown icon-action" rel="help">
+  <i class="ri-markdown-line" aria-hidden="true"></i>
+  <span class="sr-only">Copy Markdown</span>
+</a>
+
+
+      <a href="https://github.com/oivoodoo/phoenix_lens/blob/v0.1.5/docs/decisions/002-field-policy-on-every-sink.md#L1" title="View Source" class="icon-action" rel="help nofollow">
+        <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        <span class="sr-only">View Source</span>
+      </a>
+
+  </div>
+
+
+<h2 id="status" class="section-heading"><a href="#status" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Status</span></h2><p>Accepted</p><h2 id="date" class="section-heading"><a href="#date" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Date</span></h2><p>2026-09-04</p><h2 id="context" class="section-heading"><a href="#context" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Context</span></h2><p>GDPR (minimization, privacy by design, records of processing) and healthcare (HIPAA minimum necessary, audit controls) require that PII/PHI not leak through analytics. The requested control is a plugin setting listing fields to mask (<code class="inline">email</code>, <code class="inline">first_name</code>, …).</p><p>Name-based masking of the result grid is bypassable (<code class="inline">SELECT email AS contact</code>, <code class="inline">first_name || last_name</code>, CSV export, exception logs, alert emails). A library that claims “healthcare acceptable” while only starring columns in HTML would fail the first review.</p><p>A Hex library cannot be “HIPAA certified.” The operator is the covered entity. We can be designed so that the dashboard path does not emit protected values.</p><h2 id="decision" class="section-heading"><a href="#decision" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Decision</span></h2><ol><li><strong>Control plane:</strong> merge <code class="inline">masked_fields</code> config, per-database overrides, and every Ecto schema field with <code class="inline">redact: true</code>.</li><li><strong>Enforcement:</strong> one <code class="inline">PhoenixLens.Policy</code> function runs on every sink — LiveView grid, CSV, JSON, chart tooltips, embeds, logs, future alerts. There is no unmasked result type that UI code is allowed to hold.</li><li><strong>Alias hole:</strong> resolve origin columns via PostgreSQL <code class="inline">RowDescription</code> (table OID + attribute number → <code class="inline">pg_attribute.attname</code>). Mask if the origin name <strong>or</strong> the output alias is protected.</li><li><strong>Expressions:</strong> if a result column has no origin (computed), treat it as protected when the SELECT item’s SQL text contains a protected identifier. Known limitation: subquery/function smuggling. Document it; do not claim it is closed.</li><li><strong>WHERE:</strong> protected fields may appear in filters (support lookup). Literals that look like emails/phones in stored SQL and the audit viewer are redacted.</li><li><strong>Default render:</strong> the atom <code class="inline">:redacted</code> displayed as <code class="inline">[redacted]</code>. Not hashed, not dropped, in v1.</li><li><strong>Never persist rowsets.</strong> Persist questions and audit metadata only. Audit stores redacted SQL, query hash, actor, row count, duration — never cells.</li></ol><h2 id="alternatives-considered" class="section-heading"><a href="#alternatives-considered" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Alternatives Considered</span></h2><h3 id="display-only-mask-config-list-star-columns-in-the-table" class="section-heading"><a href="#display-only-mask-config-list-star-columns-in-the-table" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Display-only mask (config list → star columns in the table)</span></h3><ul><li>Pros: Fast</li><li>Cons: Aliases, CSV, logs, and emails bypass it</li><li>Rejected: Incompatible with the healthcare requirement.</li></ul><h3 id="allowlist-deny-querying-phi-at-all" class="section-heading"><a href="#allowlist-deny-querying-phi-at-all" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Allowlist / deny querying PHI at all</span></h3><ul><li>Pros: What auditors actually want</li><li>Cons: Breaks <code class="inline">WHERE email = $1</code> support lookups; heavier SQL analysis</li><li>Deferred: <code class="inline">strict: true</code> is an explicit v2 flag, not the v1 default.</li></ul><h3 id="strip-columns-instead-of-mask" class="section-heading"><a href="#strip-columns-instead-of-mask" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Strip columns instead of mask</span></h3><ul><li>Pros: Cleaner CSV</li><li>Cons: User asked for mask; stripping hides that a column was selected (confusing while writing SQL)</li><li><p>Deferred: optional <code class="inline">on_protected: :strip | :mask | :hash</code> after mask works.</p></li></ul><h3 id="database-views-column-privileges-as-the-only-control" class="section-heading"><a href="#database-views-column-privileges-as-the-only-control" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Database views / column privileges as the only control</span></h3><ul><li>Pros: Enforced by Postgres</li><li>Cons: Host apps do not want a parallel schema; Ecto <code class="inline">redact: true</code> is already the semantic layer</li><li>Rejected as the only control; operators may still use a restricted DB user on a replica, and we should document that.</li></ul><h2 id="consequences" class="section-heading"><a href="#consequences" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Consequences</span></h2><ul><li>Policy is a pure function of <code class="inline">{columns, rows, policy}</code> → <code class="inline">{columns, rows}</code> and is unit-tested without Phoenix</li><li>SQL execution must keep origin metadata, not just aliased names</li><li>Logger backends and exception pages must go through the same redactor</li><li>Subquery bypass remains a documented threat; mount stays admin-only</li><li>“Designed for GDPR/HIPAA” language in the README; no certification claim</li></ul>
+
+</div>
+
+<div class="bottom-actions" id="bottom-actions">
+  <div class="bottom-actions-item">
+
+      <a href="001-in-process-not-a-metabase-clone.html" class="bottom-actions-button" rel="prev">
+        <span class="subheader">
+          ← Previous Page
+        </span>
+        <span class="title">
+ADR-001: In-process PgHero-shaped library, not a Metabase clone
+        </span>
+      </a>
+
+  </div>
+  <div class="bottom-actions-item">
+
+      <a href="003-postgres-read-replica-timeout.html" class="bottom-actions-button" rel="next">
+        <span class="subheader">
+          Next Page →
+        </span>
+        <span class="title">
+ADR-003: PostgreSQL only, prefer replica, hard timeout and row cap
+        </span>
+      </a>
+
+  </div>
+</div>
+    <footer class="footer">
+
+        <p>
+
+            <span class="line">
+              <a href="https://hex.pm/packages/phoenix_lens/0.1.5">Hex Package</a>
+
+              <a href="https://preview.hex.pm/preview/phoenix_lens/0.1.5">Hex Preview</a>
+
+                (<a href="https://preview.hex.pm/preview/phoenix_lens/0.1.5/show/docs/decisions/002-field-policy-on-every-sink.md">current file</a>)
+
+            </span>
+
+          <span class="line">
+            <button class="a-main footer-button display-quick-switch" title="Go to package docs">
+              Go to package docs
+            </button>
+
+              <a href="llms.txt" target="_blank">
+                View llms.txt
+              </a>
+
+
+              <a href="phoenix_lens.epub">
+                Download ePub version
+              </a>
+
+          </span>
+        </p>
+
+        <p class="built-using">
+          Built using
+          <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.40.4) for the
+
+            <a href="https://elixir-lang.org" title="Elixir" target="_blank" translate="no">Elixir programming language</a>
+
+        </p>
+
+
+    </footer>
+  </div>
+</main>
+</div>
+
+  </body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.40.4">
+    <meta name="project" content="phoenix_lens v0.1.5">
+
+
+    <title>Alerts — phoenix_lens v0.1.5</title>
+
+    <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
+
+    <script defer src="dist/sidebar_items-43FC3EA9.js"></script>
+    <script defer src="docs_config.js"></script>
+    <script defer src="dist/html-MI33G4N7.js"></script>
+
+  </head>
+  <body>
+    <script>(()=>{var t="ex_doc:settings",e="dark";var o="dark",s="light";var E="sidebar_state",n="closed";var r="sidebar_width";var a="sidebar-open";var i=new URLSearchParams(window.location.search),S=i.get("theme")||JSON.parse(localStorage.getItem(t)||"{}").theme;(S===o||S!==s&&window.matchMedia("(prefers-color-scheme: dark)").matches)&&document.body.classList.add(e);var d=sessionStorage.getItem(E),A=d!==n&&!window.matchMedia(`screen and (max-width: ${768}px)`).matches;document.body.classList.toggle(a,A);var c=sessionStorage.getItem(r);c&&document.body.style.setProperty("--sidebarWidth",`${c}px`);var p=/(Macintosh|iPhone|iPad|iPod)/.test(window.navigator.userAgent);document.documentElement.classList.toggle("apple-os",p);})();
+</script>
+
+<div class="body-wrapper">
+
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
+
+<nav id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
+
+      <div>
+        <a href="https://oivoodoo.github.io/phoenix_lens" class="sidebar-projectName" translate="no">
+phoenix_lens
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v0.1.5
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-list-nav" class="sidebar-list-nav" role="tablist" data-extras="Pages"></ul>
+  </div>
+</nav>
+
+<output role="status" id="toast"></output>
+
+<main class="content page-extra" id="main" data-type="extras">
+  <div id="content" class="content-inner">
+    <div class="top-search">
+      <div class="search-settings">
+        <form class="search-bar" action="search.html">
+          <label class="search-label">
+            <span class="sr-only">Search documentation of phoenix_lens</span>
+            <div class="search-input-wrapper">
+              <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+              <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+                <i class="ri-close-line ri-lg" title="Cancel search"></i>
+              </button>
+            </div>
+          </label>
+        </form>
+        <div class="autocomplete">
+        </div>
+        <div class="engine-selector" data-multiple="false">
+          <button type="button" class="engine-button" aria-label="Select search engine" aria-haspopup="true" aria-expanded="false">
+            <i class="ri-search-2-line" aria-hidden="true"></i>
+            <span class="engine-name">Default</span>
+            <i class="ri-arrow-down-s-line" aria-hidden="true"></i>
+          </button>
+          <div class="engine-dropdown" hidden role="menu">
+
+              <button type="button"
+                      class="engine-option"
+                      data-engine-url="search.html?q="
+                      role="menuitemradio"
+                      aria-checked="true">
+                <span class="name">Default</span>
+                <span class="help">In-browser search</span>
+              </button>
+
+          </div>
+        </div>
+        <button class="icon-settings display-settings">
+          <i class="ri-settings-3-line"></i>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+
+<div id="top-content">
+  <div class="heading-with-actions top-heading">
+    <h1>Alerts</h1>
+
+<a href="alerts.md" title="Copy Markdown (hold Ctrl/Cmd and click it to open as Markdown)" class="copy-markdown icon-action" rel="help">
+  <i class="ri-markdown-line" aria-hidden="true"></i>
+  <span class="sr-only">Copy Markdown</span>
+</a>
+
+
+      <a href="https://github.com/oivoodoo/phoenix_lens/blob/v0.1.5/docs/Alerts.md#L1" title="View Source" class="icon-action" rel="help nofollow">
+        <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        <span class="sr-only">View Source</span>
+      </a>
+
+  </div>
+
+
+<p>Lens can re-run a <strong>saved question</strong> on a schedule and notify you by <strong>email</strong> or <strong>webhook</strong> when a condition is met. Same field policy as the UI: protected cells stay <code class="inline">[redacted]</code>.</p><p>This follows the Metabase idea: alerts are for questions, destinations are configured first, then attached to the question. Slack is not included; use a webhook into Slack or any other receiver.</p><h2 id="configure-integrations" class="section-heading"><a href="#configure-integrations" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Configure integrations</span></h2><p><img src="images/settings-integrations.png" alt="Settings → Integrations"/></p><p><strong>Settings → Integrations</strong> (<code class="inline">/lens/settings/integrations</code>).</p><h3 id="email" class="section-heading"><a href="#email" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Email</span></h3><p>One SMTP channel for the instance:</p><ul><li>Host, port, TLS, username, password, from address</li></ul><p>Alerts then pick recipients per question. Sending mail needs <code class="inline">{:gen_smtp, &quot;~&gt; 1.2&quot;}</code> in the <strong>host</strong> app (the dummy app already has it). You can also set app env:</p><pre><code class="makeup elixir" translate="no"><span class="n">config</span><span class="w"> </span><span class="ss">:phoenix_lens</span><span class="p">,</span><span class="w">
+  </span><span class="ss">smtp</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="group-1">[</span><span class="w">
+    </span><span class="ss">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;smtp.example.com&quot;</span><span class="p">,</span><span class="w">
+    </span><span class="ss">port</span><span class="p">:</span><span class="w"> </span><span class="mi">587</span><span class="p">,</span><span class="w">
+    </span><span class="ss">tls</span><span class="p">:</span><span class="w"> </span><span class="no">true</span><span class="p">,</span><span class="w">
+    </span><span class="ss">username</span><span class="p">:</span><span class="w"> </span><span class="nc">System</span><span class="o">.</span><span class="n">get_env</span><span class="p" data-group-id="group-2">(</span><span class="s">&quot;SMTP_USERNAME&quot;</span><span class="p" data-group-id="group-2">)</span><span class="p">,</span><span class="w">
+    </span><span class="ss">password</span><span class="p">:</span><span class="w"> </span><span class="nc">System</span><span class="o">.</span><span class="n">get_env</span><span class="p" data-group-id="group-3">(</span><span class="s">&quot;SMTP_PASSWORD&quot;</span><span class="p" data-group-id="group-3">)</span><span class="p">,</span><span class="w">
+    </span><span class="ss">from</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;lens@example.com&quot;</span><span class="w">
+  </span><span class="p" data-group-id="group-1">]</span></code></pre><h3 id="webhooks" class="section-heading"><a href="#webhooks" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Webhooks</span></h3><p>Named HTTP endpoints. Each has a URL and optional Bearer token or API-key header.</p><p>When an alert fires, Lens POSTs JSON:</p><pre><code class="json">{
+  &quot;type&quot;: &quot;alert&quot;,
+  &quot;alert_id&quot;: 1,
+  &quot;alert_condition&quot;: &quot;rows&quot;,
+  &quot;sent_at&quot;: &quot;2026-09-07T12:00:00Z&quot;,
+  &quot;data&quot;: {
+    &quot;type&quot;: &quot;question&quot;,
+    &quot;question_id&quot;: 5,
+    &quot;question_name&quot;: &quot;Users (PII masked)&quot;,
+    &quot;raw_data&quot;: { &quot;cols&quot;: [&quot;id&quot;, &quot;contact&quot;], &quot;rows&quot;: [[1, &quot;[redacted]&quot;]] },
+    &quot;num_rows&quot;: 1,
+    &quot;masked_columns&quot;: [&quot;contact&quot;]
+  }
+}</code></pre><h2 id="create-an-alert" class="section-heading"><a href="#create-an-alert" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Create an alert</span></h2><ol><li>Save the question.</li><li>Open it and click <strong>Alert</strong>.</li><li>Choose when to fire:<ul><li><strong>any rows</strong> / <strong>no rows</strong></li><li><strong>above</strong> / <strong>below</strong> a numeric goal (first numeric, non-masked cell)</li></ul></li><li>Choose how often to check: 1m, 5m, 15m, hourly, 6h, daily.</li><li>Add email addresses and/or webhooks.</li><li>Optionally <strong>Only send once, then disable</strong>.</li></ol><p><strong>Send now</strong> runs the question immediately and delivers if the condition is met.</p><p>A scheduler in the Lens OTP app checks due alerts about every 30 seconds. Audit actor is <code class="inline">alert:&lt;id&gt;</code>.</p><h2 id="mcp" class="section-heading"><a href="#mcp" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">MCP</span></h2><p><code class="inline">list_integrations</code>, <code class="inline">save_email_integration</code>, <code class="inline">add_webhook</code>, <code class="inline">remove_webhook</code>, <code class="inline">list_alerts</code>, <code class="inline">create_alert</code>, <code class="inline">delete_alert</code>, <code class="inline">run_alert</code>.</p>
+
+</div>
+
+<div class="bottom-actions" id="bottom-actions">
+  <div class="bottom-actions-item">
+
+      <a href="mcp.html" class="bottom-actions-button" rel="prev">
+        <span class="subheader">
+          ← Previous Page
+        </span>
+        <span class="title">
+MCP
+        </span>
+      </a>
+
+  </div>
+  <div class="bottom-actions-item">
+
+      <a href="phoenix.html" class="bottom-actions-button" rel="next">
+        <span class="subheader">
+          Next Page →
+        </span>
+        <span class="title">
+Phoenix
+        </span>
+      </a>
+
+  </div>
+</div>
+    <footer class="footer">
+
+        <p>
+
+            <span class="line">
+              <a href="https://hex.pm/packages/phoenix_lens/0.1.5">Hex Package</a>
+
+              <a href="https://preview.hex.pm/preview/phoenix_lens/0.1.5">Hex Preview</a>
+
+                (<a href="https://preview.hex.pm/preview/phoenix_lens/0.1.5/show/docs/Alerts.md">current file</a>)
+
+            </span>
+
+          <span class="line">
+            <button class="a-main footer-button display-quick-switch" title="Go to package docs">
+              Go to package docs
+            </button>
+
+              <a href="llms.txt" target="_blank">
+                View llms.txt
+              </a>
+
+
+              <a href="phoenix_lens.epub">
+                Download ePub version
+              </a>
+
+          </span>
+        </p>
+
+        <p class="built-using">
+          Built using
+          <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.40.4) for the
+
+            <a href="https://elixir-lang.org" title="Elixir" target="_blank" translate="no">Elixir programming language</a>
+
+        </p>
+
+
+    </footer>
+  </div>
+</main>
+</div>
+
+  </body>
+</html>

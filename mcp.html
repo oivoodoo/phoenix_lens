@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.40.4">
+    <meta name="project" content="phoenix_lens v0.1.5">
+
+
+    <title>MCP — phoenix_lens v0.1.5</title>
+
+    <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
+
+    <script defer src="dist/sidebar_items-43FC3EA9.js"></script>
+    <script defer src="docs_config.js"></script>
+    <script defer src="dist/html-MI33G4N7.js"></script>
+
+  </head>
+  <body>
+    <script>(()=>{var t="ex_doc:settings",e="dark";var o="dark",s="light";var E="sidebar_state",n="closed";var r="sidebar_width";var a="sidebar-open";var i=new URLSearchParams(window.location.search),S=i.get("theme")||JSON.parse(localStorage.getItem(t)||"{}").theme;(S===o||S!==s&&window.matchMedia("(prefers-color-scheme: dark)").matches)&&document.body.classList.add(e);var d=sessionStorage.getItem(E),A=d!==n&&!window.matchMedia(`screen and (max-width: ${768}px)`).matches;document.body.classList.toggle(a,A);var c=sessionStorage.getItem(r);c&&document.body.style.setProperty("--sidebarWidth",`${c}px`);var p=/(Macintosh|iPhone|iPad|iPod)/.test(window.navigator.userAgent);document.documentElement.classList.toggle("apple-os",p);})();
+</script>
+
+<div class="body-wrapper">
+
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
+
+<nav id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
+
+      <div>
+        <a href="https://oivoodoo.github.io/phoenix_lens" class="sidebar-projectName" translate="no">
+phoenix_lens
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v0.1.5
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-list-nav" class="sidebar-list-nav" role="tablist" data-extras="Pages"></ul>
+  </div>
+</nav>
+
+<output role="status" id="toast"></output>
+
+<main class="content page-extra" id="main" data-type="extras">
+  <div id="content" class="content-inner">
+    <div class="top-search">
+      <div class="search-settings">
+        <form class="search-bar" action="search.html">
+          <label class="search-label">
+            <span class="sr-only">Search documentation of phoenix_lens</span>
+            <div class="search-input-wrapper">
+              <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+              <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+                <i class="ri-close-line ri-lg" title="Cancel search"></i>
+              </button>
+            </div>
+          </label>
+        </form>
+        <div class="autocomplete">
+        </div>
+        <div class="engine-selector" data-multiple="false">
+          <button type="button" class="engine-button" aria-label="Select search engine" aria-haspopup="true" aria-expanded="false">
+            <i class="ri-search-2-line" aria-hidden="true"></i>
+            <span class="engine-name">Default</span>
+            <i class="ri-arrow-down-s-line" aria-hidden="true"></i>
+          </button>
+          <div class="engine-dropdown" hidden role="menu">
+
+              <button type="button"
+                      class="engine-option"
+                      data-engine-url="search.html?q="
+                      role="menuitemradio"
+                      aria-checked="true">
+                <span class="name">Default</span>
+                <span class="help">In-browser search</span>
+              </button>
+
+          </div>
+        </div>
+        <button class="icon-settings display-settings">
+          <i class="ri-settings-3-line"></i>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+
+<div id="top-content">
+  <div class="heading-with-actions top-heading">
+    <h1>MCP</h1>
+
+<a href="mcp.md" title="Copy Markdown (hold Ctrl/Cmd and click it to open as Markdown)" class="copy-markdown icon-action" rel="help">
+  <i class="ri-markdown-line" aria-hidden="true"></i>
+  <span class="sr-only">Copy Markdown</span>
+</a>
+
+
+      <a href="https://github.com/oivoodoo/phoenix_lens/blob/v0.1.5/docs/MCP.md#L1" title="View Source" class="icon-action" rel="help nofollow">
+        <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        <span class="sr-only">View Source</span>
+      </a>
+
+  </div>
+
+
+<p>Lens exposes a <a rel="nofollow" href="https://modelcontextprotocol.io">Model Context Protocol</a> server so agents can do the same work as the UI: run read-only SQL, save questions, pin dashboards, switch engines, and manage column protection. Field policy still masks every result.</p><h2 id="mount" class="section-heading"><a href="#mount" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Mount</span></h2><p>Add the plug <strong>after</strong> <a href="https://plug.hexdocs.pm/1.20.3/Plug.Parsers.html"><code class="inline">Plug.Parsers</code></a> in the host endpoint. That keeps MCP out of the browser CSRF / <code class="inline">accepts: html</code> pipeline.</p><pre><code class="makeup elixir" translate="no"><span class="n">plug</span><span class="w"> </span><span class="nc">Plug.Parsers</span><span class="p">,</span><span class="w">
+  </span><span class="ss">parsers</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="group-1">[</span><span class="ss">:urlencoded</span><span class="p">,</span><span class="w"> </span><span class="ss">:multipart</span><span class="p">,</span><span class="w"> </span><span class="ss">:json</span><span class="p" data-group-id="group-1">]</span><span class="p">,</span><span class="w">
+  </span><span class="ss">pass</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="group-2">[</span><span class="s">&quot;*/*&quot;</span><span class="p" data-group-id="group-2">]</span><span class="p">,</span><span class="w">
+  </span><span class="ss">json_decoder</span><span class="p">:</span><span class="w"> </span><span class="nc">Jason</span><span class="w">
+
+</span><span class="n">plug</span><span class="w"> </span><span class="nc">PhoenixLensWeb.Plugs.MCP</span><span class="p">,</span><span class="w"> </span><span class="ss">path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/lens/mcp&quot;</span></code></pre><p>The dummy app already does this. Open <strong>Settings → MCP</strong>.</p><h2 id="project-tokens" class="section-heading"><a href="#project-tokens" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Project tokens</span></h2><p>Each token has:</p><ul><li><strong>Token id</strong> (<code class="inline">plt_…</code>) — public, listed in Settings</li><li><strong>Secret</strong> (<code class="inline">lns_…</code>) — shown once, stored as SHA-256</li></ul><p>Send the secret on every request:</p><pre><code class="makeup elixir" translate="no"><span class="ss">Authorization</span><span class="p">:</span><span class="w"> </span><span class="nc">Bearer</span><span class="w"> </span><span class="n">lns_</span><span class="err">…</span></code></pre><p>You can bind id and secret together: <code class="inline">Authorization: Bearer plt_…:lns_…</code>.</p><p>Revoking a token in Settings immediately rejects MCP clients that used it. Creating and revoking tokens is UI-only (a stolen MCP token cannot mint more tokens).</p><p>The optional Settings → Security lock (authenticator / passkey) applies to the notebook UI only. Bearer MCP calls are not asked for a second factor.</p><h2 id="client-config" class="section-heading"><a href="#client-config" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Client config</span></h2><pre><code class="json">{
+  &quot;mcpServers&quot;: {
+    &quot;phoenix-lens&quot;: {
+      &quot;url&quot;: &quot;http://localhost:4000/lens/mcp&quot;,
+      &quot;headers&quot;: {
+        &quot;Authorization&quot;: &quot;Bearer lns_…&quot;
+      }
+    }
+  }
+}</code></pre><p>Replace the URL with your host (<code class="inline">https://app.example.com/lens/mcp</code>). Protocol: Streamable HTTP JSON-RPC (<code class="inline">initialize</code>, <code class="inline">tools/list</code>, <code class="inline">tools/call</code>).</p><h2 id="tools" class="section-heading"><a href="#tools" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Tools</span></h2><table><thead><tr><th style="text-align: left;">Tool</th><th style="text-align: left;">UI equivalent</th></tr></thead><tbody><tr><td style="text-align: left;"><code class="inline">list_tables</code>, <code class="inline">describe_table</code></td><td style="text-align: left;">Data catalog</td></tr><tr><td style="text-align: left;"><code class="inline">run_sql</code>, <code class="inline">compile_notebook</code></td><td style="text-align: left;">Ask (native SQL / notebook)</td></tr><tr><td style="text-align: left;"><code class="inline">list_questions</code>, <code class="inline">get_question</code>, <code class="inline">save_question</code>, <code class="inline">delete_question</code></td><td style="text-align: left;">Questions</td></tr><tr><td style="text-align: left;"><code class="inline">export_csv</code>, <code class="inline">export_json</code></td><td style="text-align: left;">Export</td></tr><tr><td style="text-align: left;"><code class="inline">list_dashboards</code>, <code class="inline">get_dashboard</code>, <code class="inline">save_dashboard</code>, <code class="inline">delete_dashboard</code></td><td style="text-align: left;">Dashboards</td></tr><tr><td style="text-align: left;"><code class="inline">pin_question</code>, <code class="inline">unpin_card</code>, <code class="inline">layout_dashboard</code>, <code class="inline">run_dashboard</code></td><td style="text-align: left;">Pin / arrange / open dashboard</td></tr><tr><td style="text-align: left;"><code class="inline">list_audit</code></td><td style="text-align: left;">Audit</td></tr><tr><td style="text-align: left;"><code class="inline">get_settings</code>, <code class="inline">set_engine</code>, <code class="inline">set_audit_retention</code>, <code class="inline">reconnect_engine</code></td><td style="text-align: left;">Settings → Engine</td></tr><tr><td style="text-align: left;"><code class="inline">add_source</code>, <code class="inline">remove_source</code></td><td style="text-align: left;">Extra DuckDB sources</td></tr><tr><td style="text-align: left;"><code class="inline">list_protections</code>, <code class="inline">add_protection</code>, <code class="inline">remove_protection</code></td><td style="text-align: left;">Column protection</td></tr><tr><td style="text-align: left;"><code class="inline">list_integrations</code>, <code class="inline">save_email_integration</code>, <code class="inline">add_webhook</code>, <code class="inline">remove_webhook</code></td><td style="text-align: left;">Settings → Integrations</td></tr><tr><td style="text-align: left;"><code class="inline">list_alerts</code>, <code class="inline">create_alert</code>, <code class="inline">delete_alert</code>, <code class="inline">run_alert</code></td><td style="text-align: left;">Question alerts</td></tr></tbody></table><p><code class="inline">run_sql</code> is still SELECT/WITH only. Masked cells are <code class="inline">[redacted]</code> in tool output. Audit actor is <code class="inline">mcp:&lt;token_id&gt;</code>.</p>
+
+</div>
+
+<div class="bottom-actions" id="bottom-actions">
+  <div class="bottom-actions-item">
+
+      <a href="guide.html" class="bottom-actions-button" rel="prev">
+        <span class="subheader">
+          ← Previous Page
+        </span>
+        <span class="title">
+Guide
+        </span>
+      </a>
+
+  </div>
+  <div class="bottom-actions-item">
+
+      <a href="alerts.html" class="bottom-actions-button" rel="next">
+        <span class="subheader">
+          Next Page →
+        </span>
+        <span class="title">
+Alerts
+        </span>
+      </a>
+
+  </div>
+</div>
+    <footer class="footer">
+
+        <p>
+
+            <span class="line">
+              <a href="https://hex.pm/packages/phoenix_lens/0.1.5">Hex Package</a>
+
+              <a href="https://preview.hex.pm/preview/phoenix_lens/0.1.5">Hex Preview</a>
+
+                (<a href="https://preview.hex.pm/preview/phoenix_lens/0.1.5/show/docs/MCP.md">current file</a>)
+
+            </span>
+
+          <span class="line">
+            <button class="a-main footer-button display-quick-switch" title="Go to package docs">
+              Go to package docs
+            </button>
+
+              <a href="llms.txt" target="_blank">
+                View llms.txt
+              </a>
+
+
+              <a href="phoenix_lens.epub">
+                Download ePub version
+              </a>
+
+          </span>
+        </p>
+
+        <p class="built-using">
+          Built using
+          <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.40.4) for the
+
+            <a href="https://elixir-lang.org" title="Elixir" target="_blank" translate="no">Elixir programming language</a>
+
+        </p>
+
+
+    </footer>
+  </div>
+</main>
+</div>
+
+  </body>
+</html>

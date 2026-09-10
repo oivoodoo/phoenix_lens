@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.40.4">
+    <meta name="project" content="phoenix_lens v0.1.5">
+
+
+    <title>Guide — phoenix_lens v0.1.5</title>
+
+    <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
+
+    <script defer src="dist/sidebar_items-43FC3EA9.js"></script>
+    <script defer src="docs_config.js"></script>
+    <script defer src="dist/html-MI33G4N7.js"></script>
+
+  </head>
+  <body>
+    <script>(()=>{var t="ex_doc:settings",e="dark";var o="dark",s="light";var E="sidebar_state",n="closed";var r="sidebar_width";var a="sidebar-open";var i=new URLSearchParams(window.location.search),S=i.get("theme")||JSON.parse(localStorage.getItem(t)||"{}").theme;(S===o||S!==s&&window.matchMedia("(prefers-color-scheme: dark)").matches)&&document.body.classList.add(e);var d=sessionStorage.getItem(E),A=d!==n&&!window.matchMedia(`screen and (max-width: ${768}px)`).matches;document.body.classList.toggle(a,A);var c=sessionStorage.getItem(r);c&&document.body.style.setProperty("--sidebarWidth",`${c}px`);var p=/(Macintosh|iPhone|iPad|iPod)/.test(window.navigator.userAgent);document.documentElement.classList.toggle("apple-os",p);})();
+</script>
+
+<div class="body-wrapper">
+
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
+
+<nav id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
+
+      <div>
+        <a href="https://oivoodoo.github.io/phoenix_lens" class="sidebar-projectName" translate="no">
+phoenix_lens
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v0.1.5
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-list-nav" class="sidebar-list-nav" role="tablist" data-extras="Pages"></ul>
+  </div>
+</nav>
+
+<output role="status" id="toast"></output>
+
+<main class="content page-extra" id="main" data-type="extras">
+  <div id="content" class="content-inner">
+    <div class="top-search">
+      <div class="search-settings">
+        <form class="search-bar" action="search.html">
+          <label class="search-label">
+            <span class="sr-only">Search documentation of phoenix_lens</span>
+            <div class="search-input-wrapper">
+              <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+              <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+                <i class="ri-close-line ri-lg" title="Cancel search"></i>
+              </button>
+            </div>
+          </label>
+        </form>
+        <div class="autocomplete">
+        </div>
+        <div class="engine-selector" data-multiple="false">
+          <button type="button" class="engine-button" aria-label="Select search engine" aria-haspopup="true" aria-expanded="false">
+            <i class="ri-search-2-line" aria-hidden="true"></i>
+            <span class="engine-name">Default</span>
+            <i class="ri-arrow-down-s-line" aria-hidden="true"></i>
+          </button>
+          <div class="engine-dropdown" hidden role="menu">
+
+              <button type="button"
+                      class="engine-option"
+                      data-engine-url="search.html?q="
+                      role="menuitemradio"
+                      aria-checked="true">
+                <span class="name">Default</span>
+                <span class="help">In-browser search</span>
+              </button>
+
+          </div>
+        </div>
+        <button class="icon-settings display-settings">
+          <i class="ri-settings-3-line"></i>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+
+<div id="top-content">
+  <div class="heading-with-actions top-heading">
+    <h1>Guide</h1>
+
+<a href="guide.md" title="Copy Markdown (hold Ctrl/Cmd and click it to open as Markdown)" class="copy-markdown icon-action" rel="help">
+  <i class="ri-markdown-line" aria-hidden="true"></i>
+  <span class="sr-only">Copy Markdown</span>
+</a>
+
+
+      <a href="https://github.com/oivoodoo/phoenix_lens/blob/v0.1.5/docs/Guide.md#L1" title="View Source" class="icon-action" rel="help nofollow">
+        <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        <span class="sr-only">View Source</span>
+      </a>
+
+  </div>
+
+
+<p>Lens is a mountable Phoenix LiveView SQL notebook pointed at the host Ecto Repo. It is the PgHero-shaped tool you mount at <code class="inline">/lens</code>: ask a question, save it, pin it to a dashboard, and <strong>mask PII/PHI in every output</strong>.</p><p>It is not Metabase. There is no sidecar JVM and no god-mode warehouse user. Queries are <strong>view-only</strong>: <code class="inline">SELECT</code> / <code class="inline">WITH</code> (optional <code class="inline">EXPLAIN</code>) only — <code class="inline">DELETE</code>, <code class="inline">UPDATE</code>, and <code class="inline">INSERT</code> are rejected. Field policy runs on the grid, CSV, JSON, embeds, MCP tool results, and the audit log.</p><p>This page is a tour of the product as it looks in the dummy app (<code class="inline">dummy/</code> on <a rel="nofollow" href="http://localhost:4000/lens">http://localhost:4000/lens</a>), plus how queries are designed for <strong>PostgreSQL</strong> (default) and <strong>DuckDB</strong> (optional). Agents can drive the same notebook over <strong>MCP</strong> at <code class="inline">/lens/mcp</code>.</p><p>Install and auth: <a href="phoenix.html">Phoenix.md</a>. MCP server: <a href="mcp.html">MCP.md</a>. Threat model: <a href="policy.html">Policy.md</a>. Host pipeline as permissions: <a href="permissions.html">Permissions.md</a>.</p><p>This library is <strong>not</strong> HIPAA or GDPR certified. You are the operator.</p><h2 id="home" class="section-heading"><a href="#home" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Home</span></h2><p><img src="images/home.png" alt="Lens home in the dummy app"/></p><p>The shell is a top bar: search, Dashboards, Questions, Data, Audit, Settings, and <strong>Ask a question</strong>. Home lists x-rays for discovered tables and any dashboards you pin.</p><p>Dummy data is a small SaaS-shaped schema: <code class="inline">users</code>, <code class="inline">orders</code>, <code class="inline">posts</code>, <code class="inline">comments</code>, <code class="inline">logs</code>, <code class="inline">subscriptions</code>. Configured masks in the dummy app:</p><pre><code class="makeup elixir" translate="no"><span class="n">config</span><span class="w"> </span><span class="ss">:phoenix_lens</span><span class="p">,</span><span class="w">
+  </span><span class="ss">repo</span><span class="p">:</span><span class="w"> </span><span class="nc">Dummy.Repo</span><span class="p">,</span><span class="w">
+  </span><span class="ss">masked_fields</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="group-1">[</span><span class="ss">:email</span><span class="p">,</span><span class="w"> </span><span class="ss">:first_name</span><span class="p">,</span><span class="w"> </span><span class="ss">:phone</span><span class="p">,</span><span class="w"> </span><span class="ss">:ip</span><span class="p">,</span><span class="w"> </span><span class="ss">:author_email</span><span class="p" data-group-id="group-1">]</span></code></pre><p>Ecto <code class="inline">redact: true</code> (for example <code class="inline">Dummy.Accounts.User.email</code>) is merged in automatically.</p><h2 id="asking-a-question" class="section-heading"><a href="#asking-a-question" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Asking a question</span></h2><p><code class="inline">/lens/ask</code> has two editors. <strong>Notebook</strong> compiles filters, metrics, and grouping into SQL. <strong>Native query</strong> is a SQL textarea. Both share the same preview pane, the same <code class="inline">PhoenixLens.Query.run/2</code> path, and the same field policy.</p><h3 id="notebook" class="section-heading"><a href="#notebook" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Notebook</span></h3><p><img src="images/ask-notebook.png" alt="Notebook: orders counted by status, bar chart"/></p><ol><li><strong>Data</strong> — pick a table. Protected columns stay labelled; picking a table auto-previews <code class="inline">SELECT *</code>.</li><li><strong>Filter</strong> — equals, contains, empty, comparisons. <code class="inline">contains</code> becomes <code class="inline">ILIKE</code>.</li><li><strong>Summarize</strong> — count / sum / avg / min / max, plus <strong>Group by</strong>.</li><li><strong>Limit</strong> — preview cap (hard ceiling is still <code class="inline">max_rows</code>, default 10_000).</li></ol><p><strong>Visualize</strong> re-runs the compiled SQL. The preview switches Table / Number / Bar / Line / Pie / Combo. Charts coerce Y to a numeric column or <strong>Count of rows</strong>; a masked text column is not a valid Y axis.</p><p><strong>View SQL</strong> shows the generated statement, for example:</p><pre><code class="sql">SELECT &quot;status&quot;, count(*) AS &quot;count&quot;
+FROM &quot;orders&quot;
+GROUP BY &quot;status&quot;
+LIMIT 100</code></pre><p>Save stores the SQL (not the notebook AST) on the host Repo.</p><h3 id="native-query" class="section-heading"><a href="#native-query" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Native query</span></h3><p><img src="images/ask-sql.png" alt="Native SQL: email aliased as contact is still [redacted]"/></p><p>Type SQL, then <strong>Run</strong> or <strong>Ctrl+Enter</strong> (Cmd+Enter on macOS). Autocomplete uses Ecto schemas plus <code class="inline">information_schema</code> (or DuckDB’s catalog when that engine is on). Type after <code class="inline">FROM</code> / <code class="inline">JOIN</code> for tables, <code class="inline">users.</code> for columns.</p><p>The dummy query that shows policy on an alias:</p><pre><code class="sql">SELECT id, email AS contact, first_name, last_name
+FROM users
+ORDER BY id
+LIMIT 12</code></pre><p><code class="inline">contact</code> is still <code class="inline">[redacted]</code>: masking keys off the origin identifier, not only the output name. <code class="inline">first_name</code> is in <code class="inline">masked_fields</code>; <code class="inline">last_name</code> is a runtime global rule from <strong>Column protection</strong>.</p><h2 id="catalog" class="section-heading"><a href="#catalog" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Catalog</span></h2><p><img src="images/catalog.png" alt="Data catalog with protected columns marked"/></p><p><strong>Data</strong> (<code class="inline">/lens/catalog</code>) lists tables from the current engine and Ecto schemas. Protected fields are marked and rendered in the protected colour. <strong>Ask →</strong> opens the notebook on that table.</p><p>When the engine is DuckDB, the same page is sourced from attached databases (<code class="inline">repo.users</code> also appears as <code class="inline">users</code> via host views). Internal DuckDB catalogs may show as <code class="inline">memory</code>:</p><p><img src="images/catalog-duckdb.png" alt="Catalog while DuckDB is the query engine"/></p><h2 id="questions-and-dashboards" class="section-heading"><a href="#questions-and-dashboards" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Questions and dashboards</span></h2><p><img src="images/questions.png" alt="Saved questions"/></p><p>A saved question is a name, SQL, viz, and database id. Opening it re-runs through <code class="inline">Query.run/2</code>. The editor, <strong>Export</strong> CSV, <strong>Delete</strong>, and <strong>Save</strong> sit in the toolbar. Pin the question onto a dashboard from the same page.</p><p><img src="images/question.png" alt="Saved question with masked cells"/></p><p>Dashboards are folders of cards. Each card is a saved question. Optional date-range filters wrap the SQL when a date column is set. <strong>Edit</strong> turns on a 12-column board: drag a card to move it, pull the corner to resize, then <strong>Save</strong>. <strong>Cancel</strong> drops unsaved arrangement.</p><p><img src="images/dashboard.png" alt="Dashboard: bar chart, aggregation table, masked users"/></p><p><code class="inline">QuestionCard</code> embeds the same result (and the same policy) in a host LiveView:</p><pre><code class="heex">&lt;.live_component
+  module={PhoenixLens.Components.QuestionCard}
+  id={&quot;q-#{id}&quot;}
+  question_id={id}
+  actor={@current_user}
+/&gt;</code></pre><h2 id="audit" class="section-heading"><a href="#audit" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Audit</span></h2><p><img src="images/audit.png" alt="Audit log of redacted SQL"/></p><p>Every run records <strong>who</strong>, <strong>redacted SQL</strong>, row count, duration, and error. Result cells are never stored. Actor is <code class="inline">conn.assigns[:current_user]</code> (or <code class="inline">actor_assign:</code>); a struct with <code class="inline">:id</code> is stored as <code class="inline">user:&lt;id&gt;</code> — never the email.</p><p>Pagination is 25 / 50 / 100. Retention is <strong>Settings → Audit log</strong> (7, 30, 90, 180, 365 days, or forever). Default is 90 days. Expired rows are deleted on record, on the audit page, and when retention is saved.</p><h2 id="settings" class="section-heading"><a href="#settings" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Settings</span></h2><h3 id="postgresql-vs-duckdb" class="section-heading"><a href="#postgresql-vs-duckdb" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">PostgreSQL vs DuckDB</span></h3><p><img src="images/settings-postgresql.png" alt="Settings: PostgreSQL selected"/></p><p>The default engine is <strong>PostgreSQL</strong>: Lens runs your SQL on the host Repo (or a replica URL) inside a read-only transaction.</p><p><img src="images/settings-duckdb.png" alt="Settings: DuckDB selected, host Postgres attached as repo"/></p><p><strong>DuckDB</strong> starts an in-process engine, attaches the host Repo read-only as <code class="inline">repo</code>, and lets you attach extra sources to that one connection. Questions, dashboards, settings, and audit still live on the host Repo. Field policy still runs on every DuckDB result.</p><p>DuckDB is optional. The dummy app already depends on it; a host app must add:</p><pre><code class="makeup elixir" translate="no"><span class="p" data-group-id="group-1">{</span><span class="ss">:duckdbex</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;~&gt; 0.4&quot;</span><span class="p" data-group-id="group-1">}</span></code></pre><p>Without the NIF, Settings still render and switching explains the missing dep.</p><h3 id="extra-sources" class="section-heading"><a href="#extra-sources" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Extra sources</span></h3><p><img src="images/settings-add-source.png" alt="Add source modal"/></p><p><strong>Add source</strong> is a modal: alias, kind, connection string or path. Kinds: Postgres, MySQL, SQLite, DuckDB file, Parquet, CSV, JSON. File sources become a view named after the alias. Remote HTTP/S3 paths load the <code class="inline">httpfs</code> extension.</p><p>Query extras as <code class="inline">alias.table</code> (or the alias itself for files). DSNs are redacted in the table (<code class="inline">password=••••</code>).</p><h3 id="column-protection" class="section-heading"><a href="#column-protection" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Column protection</span></h3><p><img src="images/settings-protection.png" alt="Column protection: global chips, per-source, per-table"/></p><p><code class="inline">/lens/settings/protection</code> adds runtime masks on top of config and Ecto <code class="inline">redact: true</code>:</p><table><thead><tr><th style="text-align: left;">Scope</th><th style="text-align: left;">Effect</th></tr></thead><tbody><tr><td style="text-align: left;"><strong>Global</strong></td><td style="text-align: left;">Column name is masked on every source and table. Config / <code class="inline">redact: true</code> names are locked chips.</td></tr><tr><td style="text-align: left;"><strong>Per source</strong></td><td style="text-align: left;">Masked on that database id or DuckDB alias.</td></tr><tr><td style="text-align: left;"><strong>Per table</strong></td><td style="text-align: left;">Masked only when the SQL <code class="inline">FROM</code> / <code class="inline">JOIN</code> list includes that table. <code class="inline">users.email</code> does not mask <code class="inline">subscriptions.email</code>.</td></tr></tbody></table><p>Locked chips cannot be removed from the UI; change <code class="inline">masked_fields</code> or the schema instead.</p><h3 id="mcp" class="section-heading"><a href="#mcp" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">MCP</span></h3><p><img src="images/settings-mcp.png" alt="Settings → MCP: project tokens for the agent endpoint"/></p><p><strong>Settings → MCP</strong> (<code class="inline">/lens/settings/mcp</code>) issues project tokens for the Streamable HTTP MCP server at <code class="inline">/lens/mcp</code>. Each token has a public <strong>token id</strong> (<code class="inline">plt_…</code>) and a <strong>secret</strong> (<code class="inline">lns_…</code>) shown once. Clients send <code class="inline">Authorization: Bearer &lt;secret&gt;</code>.</p><p>Tools cover the same surfaces as the UI (catalog, SQL, questions, dashboards, audit, engines, sources, column protection). Field policy still masks cells as <code class="inline">[redacted]</code>. Creating and revoking tokens is UI-only. Setup and the tool list: <a href="mcp.html">MCP.md</a>.</p><h3 id="integrations-and-alerts" class="section-heading"><a href="#integrations-and-alerts" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Integrations and alerts</span></h3><p><img src="images/settings-integrations.png" alt="Settings → Integrations: SMTP and a named webhook"/></p><p><strong>Settings → Integrations</strong> configures SMTP and named webhooks. On a saved question, <strong>Alert</strong> sends email or a JSON POST when the question returns rows, returns none, or crosses a numeric goal. Masked cells stay <code class="inline">[redacted]</code>. Details: <a href="alerts.html">Alerts.md</a>.</p><p><img src="images/question-alert.png" alt="Create an alert on a saved question"/></p><h3 id="security" class="section-heading"><a href="#security" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Security</span></h3><p><img src="images/settings-security.png" alt="Settings → Security: authenticator app and passkeys"/></p><p><strong>Settings → Security</strong> (<code class="inline">/lens/settings/security</code>) is optional. Enable an authenticator app (Google Authenticator, 1Password, Authy, …) and/or register a passkey (Touch ID, Face ID, Windows Hello, security key). After either is on, visitors must unlock at <code class="inline">/lens/unlock</code> before the notebook. MCP tokens skip this step. Host pipeline auth is still required. Locked out: <code class="inline">PhoenixLens.Auth.reset!()</code> in IEx.</p><p><img src="images/settings-security-totp.png" alt="Authenticator setup: scan the QR, then confirm a 6-digit code"/></p><p>Details: <a href="phoenix.html">Phoenix.md</a>, <a href="permissions.html">Permissions.md</a>.</p><h2 id="query-design" class="section-heading"><a href="#query-design" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Query design</span></h2><p>Every notebook click and every <strong>Run</strong> lands in <code class="inline">PhoenixLens.Query.run/2</code>. There is no public unmasked path.</p><pre><code class="makeup elixir" translate="no"><span class="w">  </span><span class="n">editor</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">notebook</span><span class="w">
+          </span><span class="err">│</span><span class="w">
+          </span><span class="err">▼</span><span class="w">
+   </span><span class="nc">SQL</span><span class="o">.</span><span class="n">validate</span><span class="o">/</span><span class="mi">1</span><span class="w">          </span><span class="n">one</span><span class="w"> </span><span class="n">statement</span><span class="p">;</span><span class="w"> </span><span class="nc">SELECT</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nc">WITH</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nc">EXPLAIN</span><span class="w"> </span><span class="err">…</span><span class="w">
+          </span><span class="err">│</span><span class="w">
+          </span><span class="err">▼</span><span class="w">
+   </span><span class="nc">Settings</span><span class="o">.</span><span class="n">engine</span><span class="p" data-group-id="group-1">(</span><span class="p" data-group-id="group-1">)</span><span class="w">
+      </span><span class="err">┌</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">┴</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">┐</span><span class="w">
+      </span><span class="err">▼</span><span class="w">        </span><span class="err">▼</span><span class="w">
+ </span><span class="nc">PostgreSQL</span><span class="w">   </span><span class="nc">DuckDB.Server</span><span class="w">
+ </span><span class="n">read</span><span class="o">-</span><span class="n">only</span><span class="w">    </span><span class="nc">ATTACH</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nc">SELECT</span><span class="w">
+ </span><span class="n">timeout</span><span class="w">      </span><span class="n">timeout</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="n">cap</span><span class="w">
+      </span><span class="err">└</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">┬</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">─</span><span class="err">┘</span><span class="w">
+          </span><span class="err">▼</span><span class="w">
+   </span><span class="nc">Policy</span><span class="o">.</span><span class="n">apply</span><span class="o">/</span><span class="mi">4</span><span class="w">          </span><span class="n">origin</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">output</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">computed</span><span class="w"> </span><span class="n">expr</span><span class="w">
+          </span><span class="err">▼</span><span class="w">
+   </span><span class="p" data-group-id="group-2">%</span><span class="nc" data-group-id="group-2">Result</span><span class="p" data-group-id="group-2">{</span><span class="p" data-group-id="group-2">}</span><span class="w">               </span><span class="ss">:redacted</span><span class="w"> </span><span class="n">cells</span><span class="w">
+          </span><span class="err">│</span><span class="w">
+          </span><span class="err">├</span><span class="err">─</span><span class="err">─</span><span class="w"> </span><span class="n">grid</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">charts</span><span class="w">
+          </span><span class="err">├</span><span class="err">─</span><span class="err">─</span><span class="w"> </span><span class="nc">CSV</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nc">JSON</span><span class="w"> </span><span class="n">export</span><span class="w">
+          </span><span class="err">├</span><span class="err">─</span><span class="err">─</span><span class="w"> </span><span class="nc">QuestionCard</span><span class="w"> </span><span class="n">embed</span><span class="w">
+          </span><span class="err">├</span><span class="err">─</span><span class="err">─</span><span class="w"> </span><span class="nc">MCP</span><span class="w"> </span><span class="n">tools</span><span class="o">/</span><span class="n">call</span><span class="w">
+          </span><span class="err">└</span><span class="err">─</span><span class="err">─</span><span class="w"> </span><span class="nc">Audit</span><span class="o">.</span><span class="n">record</span><span class="w"> </span><span class="p" data-group-id="group-3">(</span><span class="nc">SQL</span><span class="w"> </span><span class="n">redacted</span><span class="p">,</span><span class="w"> </span><span class="n">no</span><span class="w"> </span><span class="n">cells</span><span class="p" data-group-id="group-3">)</span></code></pre><h3 id="what-sql-is-allowed" class="section-heading"><a href="#what-sql-is-allowed" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">What SQL is allowed</span></h3><p><code class="inline">PhoenixLens.SQL.validate/1</code>:</p><ul><li>Exactly one statement</li><li>First keyword <code class="inline">SELECT</code> or <code class="inline">WITH</code>, or <code class="inline">EXPLAIN</code> of those</li><li>Rejects <code class="inline">INSERT</code> / <code class="inline">UPDATE</code> / <code class="inline">DELETE</code> / <code class="inline">DROP</code> / <code class="inline">ALTER</code> / <code class="inline">CREATE</code> / <code class="inline">COPY</code> / <code class="inline">ATTACH</code> / <code class="inline">DETACH</code> / <code class="inline">INSTALL</code> / <code class="inline">LOAD</code> / …</li></ul><p><code class="inline">ATTACH</code> and <code class="inline">INSTALL</code> happen only inside the DuckDB engine, never from the editor.</p><h3 id="notebook-sql" class="section-heading"><a href="#notebook-sql" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Notebook → SQL</span></h3><p><code class="inline">PhoenixLens.Notebook</code> is a small compiler, not a query planner. Identifiers are quoted. Filters AND together. Aggregations without a group-by still emit <code class="inline">count(*)</code> when you add a metric. The saved artifact is the SQL string.</p><h3 id="origin-aware-masking" class="section-heading"><a href="#origin-aware-masking" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Origin-aware masking</span></h3><p><code class="inline">SQL.column_origins/2</code> walks the SELECT list. A column is masked when:</p><ul><li>the output name is protected (<code class="inline">SELECT email</code>)</li><li>the origin identifier is protected (<code class="inline">SELECT email AS contact</code>)</li><li>the SELECT item is a computed expression that mentions a protected identifier (<code class="inline">first_name || last_name</code>)</li></ul><p>Table-scoped rules use <code class="inline">SQL.table_refs/1</code> (<code class="inline">FROM</code> / <code class="inline">JOIN</code>, including <code class="inline">repo.users</code>). Double-quoted identifiers are kept; only single-quoted string literals are stripped before the scan.</p><h3 id="result-shape" class="section-heading"><a href="#result-shape" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Result shape</span></h3><p><code class="inline">%PhoenixLens.Result{}</code> columns stay the SQL names; masked cells are the atom <code class="inline">:redacted</code>, rendered <code class="inline">[redacted]</code>. <code class="inline">masked_columns</code> is listed under the grid (see the Users card on the dashboard screenshot). Do not log result rows.</p><h2 id="postgresql-engine" class="section-heading"><a href="#postgresql-engine" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">PostgreSQL engine</span></h2><p>Default. <code class="inline">Query</code> opens a transaction on the configured Repo (or a <a href="https://postgrex.hexdocs.pm/0.22.4/Postgrex.html"><code class="inline">Postgrex</code></a> connection for <code class="inline">databases:</code> URLs) and sets:</p><pre><code class="sql">SET LOCAL transaction_read_only = on
+SET LOCAL statement_timeout = 5000   -- timeout_ms, default 5s</code></pre><p>Then it runs the user SQL with <code class="inline">log: false</code>, truncates to <code class="inline">max_rows</code> (default 10_000), applies policy, and audits.</p><p>Prefer a <strong>read replica</strong> for the query target. Metadata (questions, dashboards, settings, audit, protection rules) always uses <code class="inline">config :phoenix_lens, repo:</code>.</p><pre><code class="makeup elixir" translate="no"><span class="n">config</span><span class="w"> </span><span class="ss">:phoenix_lens</span><span class="p">,</span><span class="w">
+  </span><span class="ss">repo</span><span class="p">:</span><span class="w"> </span><span class="nc">MyApp.Repo</span><span class="p">,</span><span class="w">
+  </span><span class="ss">timeout_ms</span><span class="p">:</span><span class="w"> </span><span class="mi">5_000</span><span class="p">,</span><span class="w">
+  </span><span class="ss">max_rows</span><span class="p">:</span><span class="w"> </span><span class="mi">10_000</span><span class="p">,</span><span class="w">
+  </span><span class="ss">databases</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="group-1">[</span><span class="w">
+    </span><span class="ss">primary</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="group-2">[</span><span class="ss">repo</span><span class="p">:</span><span class="w"> </span><span class="nc">MyApp.Repo</span><span class="p" data-group-id="group-2">]</span><span class="p">,</span><span class="w">
+    </span><span class="ss">analytics</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="group-3">[</span><span class="ss">url</span><span class="p">:</span><span class="w"> </span><span class="nc">System</span><span class="o">.</span><span class="n">get_env</span><span class="p" data-group-id="group-4">(</span><span class="s">&quot;ANALYTICS_DATABASE_URL&quot;</span><span class="p" data-group-id="group-4">)</span><span class="p">,</span><span class="w"> </span><span class="ss">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Analytics&quot;</span><span class="p" data-group-id="group-3">]</span><span class="w">
+  </span><span class="p" data-group-id="group-1">]</span></code></pre><p>A replica role that can <code class="inline">SELECT</code> but not write application tables complements masking; it does not replace it. Aliases still have to be masked in the UI.</p><p>Postgres-first is the right default: no NIF, no extension download, one less failure mode for the notebook you actually mount in production. See <a href="004-duckdb-engine.html">ADR-004</a>.</p><h2 id="duckdb-engine" class="section-heading"><a href="#duckdb-engine" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">DuckDB engine</span></h2><p>Use DuckDB when one question needs to join the host Repo with another Postgres, MySQL, SQLite, Parquet, CSV, or JSON without standing up another BI box.</p><p>On switch (Settings, or <code class="inline">PhoenixLens.Settings.put_engine(&quot;duckdb&quot;)</code>):</p><ol><li>An in-memory DuckDB starts</li><li>Extensions load as needed: <code class="inline">postgres</code>, <code class="inline">mysql</code>, <code class="inline">sqlite</code>, <code class="inline">json</code>, <code class="inline">httpfs</code></li><li>Host Repo attaches <code class="inline">READ_ONLY</code> as <code class="inline">repo</code></li><li>Host public/main tables are also aliased as views, so <code class="inline">users</code> and <code class="inline">repo.users</code> both work</li><li>Extra sources <code class="inline">ATTACH</code> (or <code class="inline">read_csv_auto</code> / <code class="inline">read_parquet</code> / <code class="inline">read_json_auto</code> as views)</li></ol><p><img src="images/ask-duckdb.png" alt="Native SQL joining repo.users to repo.subscriptions on DuckDB"/></p><pre><code class="sql">SELECT u.id, s.plan, s.status
+FROM repo.users u
+JOIN repo.subscriptions s ON s.user_id = u.id
+ORDER BY u.id
+LIMIT 12</code></pre><p>Across extra sources the same idea holds:</p><pre><code class="sql">SELECT u.id, b.sku, p.plan
+FROM repo.users u
+JOIN billing.orders b ON b.user_id = u.id
+JOIN plans p ON p.user_id = u.id</code></pre><p><code class="inline">plans</code> here would be a CSV/Parquet view (the dummy app ships <code class="inline">dummy/priv/sample_plans.csv</code> you can attach as kind <code class="inline">csv</code>, alias <code class="inline">plans</code>).</p><p>Config-only extras, if you do not want them in the Settings UI:</p><pre><code class="makeup elixir" translate="no"><span class="n">config</span><span class="w"> </span><span class="ss">:phoenix_lens</span><span class="p">,</span><span class="w">
+  </span><span class="ss">engine</span><span class="p">:</span><span class="w"> </span><span class="ss">:duckdb</span><span class="p">,</span><span class="w">
+  </span><span class="ss">duckdb_sources</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="group-1">[</span><span class="w">
+    </span><span class="p" data-group-id="group-2">%{</span><span class="ss">alias</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;billing&quot;</span><span class="p">,</span><span class="w"> </span><span class="ss">kind</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;postgres&quot;</span><span class="p">,</span><span class="w"> </span><span class="ss">dsn</span><span class="p">:</span><span class="w"> </span><span class="nc">System</span><span class="o">.</span><span class="n">get_env</span><span class="p" data-group-id="group-3">(</span><span class="s">&quot;BILLING_DATABASE_URL&quot;</span><span class="p" data-group-id="group-3">)</span><span class="p" data-group-id="group-2">}</span><span class="p">,</span><span class="w">
+    </span><span class="p" data-group-id="group-4">%{</span><span class="ss">alias</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;plans&quot;</span><span class="p">,</span><span class="w"> </span><span class="ss">kind</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;csv&quot;</span><span class="p">,</span><span class="w"> </span><span class="ss">dsn</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;priv/sample_plans.csv&quot;</span><span class="p" data-group-id="group-4">}</span><span class="w">
+  </span><span class="p" data-group-id="group-1">]</span></code></pre><p>User SQL still cannot <code class="inline">ATTACH</code>. Timeouts and row caps still apply. Origin-column masking uses the SELECT list (DuckDB has no Postgres <code class="inline">RowDescription</code> OIDs).</p><h2 id="dummy-app" class="section-heading"><a href="#dummy-app" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Dummy app</span></h2><pre><code class="makeup sh" translate="no"><span class="">cd dummy
+</span><span class="">docker compose up -d
+</span><span class="">mix setup
+</span><span class="">mix phx.server
+</span></code></pre><p>Postgres is on host port <strong>5556</strong> (<code class="inline">dummy_dev</code>). Open <a rel="nofollow" href="http://localhost:4000/lens">http://localhost:4000/lens</a> and run the native query above: <code class="inline">contact</code> / <code class="inline">first_name</code> / <code class="inline">last_name</code> render as <code class="inline">[redacted]</code>. Switch the engine in Settings to try DuckDB against the same tables.</p><p>The dummy app depends on <code class="inline">{:phoenix_lens, path: &quot;..&quot;}</code> and <code class="inline">{:duckdbex, &quot;~&gt; 0.4&quot;}</code>. After beam, CSS, or JS changes, restart <a href="https://phoenix.hexdocs.pm/1.8.13/Mix.Tasks.Phx.Server.html"><code class="inline">mix phx.server</code></a> so <code class="inline">/lens/assets</code> is not an old build.</p><h2 id="mcp-1" class="section-heading"><a href="#mcp-1" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">MCP</span></h2><p>The dummy app already mounts <a href="PhoenixLensWeb.Plugs.MCP.html"><code class="inline">PhoenixLensWeb.Plugs.MCP</code></a> at <code class="inline">/lens/mcp</code>. Generate a token in Settings, then point an MCP client at that URL.</p><pre><code class="json">{
+  &quot;mcpServers&quot;: {
+    &quot;phoenix-lens&quot;: {
+      &quot;url&quot;: &quot;http://localhost:4000/lens/mcp&quot;,
+      &quot;headers&quot;: {
+        &quot;Authorization&quot;: &quot;Bearer lns_…&quot;
+      }
+    }
+  }
+}</code></pre><p><code class="inline">run_sql</code> is still SELECT/WITH only. Audit actor is <code class="inline">mcp:&lt;token_id&gt;</code>. Host mount and the full tool list: <a href="mcp.html">MCP.md</a>.</p><h2 id="related" class="section-heading"><a href="#related" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Related</span></h2><ul><li><a href="phoenix.html">Phoenix.md</a> — install, mount, auth, multi-db, embed</li><li><a href="mcp.html">MCP.md</a> — MCP server, project tokens, tools</li><li><a href="alerts.html">Alerts.md</a> — email and webhook alerts</li><li><a href="policy.html">Policy.md</a> — what is protected, known limits</li><li><a href="permissions.html">Permissions.md</a> — host pipeline is the permission model; optional 2FA / passkeys</li><li><a href="001-in-process-not-a-metabase-clone.html">ADR-001</a> — in-process, not a clone</li><li><a href="002-field-policy-on-every-sink.html">ADR-002</a> — policy on every sink</li><li><a href="003-postgres-read-replica-timeout.html">ADR-003</a> — replica, timeout, row cap</li><li><a href="004-duckdb-engine.html">ADR-004</a> — optional DuckDB engine</li></ul>
+
+</div>
+
+<div class="bottom-actions" id="bottom-actions">
+  <div class="bottom-actions-item">
+
+      <a href="changelog.html" class="bottom-actions-button" rel="prev">
+        <span class="subheader">
+          ← Previous Page
+        </span>
+        <span class="title">
+Changelog
+        </span>
+      </a>
+
+  </div>
+  <div class="bottom-actions-item">
+
+      <a href="mcp.html" class="bottom-actions-button" rel="next">
+        <span class="subheader">
+          Next Page →
+        </span>
+        <span class="title">
+MCP
+        </span>
+      </a>
+
+  </div>
+</div>
+    <footer class="footer">
+
+        <p>
+
+            <span class="line">
+              <a href="https://hex.pm/packages/phoenix_lens/0.1.5">Hex Package</a>
+
+              <a href="https://preview.hex.pm/preview/phoenix_lens/0.1.5">Hex Preview</a>
+
+                (<a href="https://preview.hex.pm/preview/phoenix_lens/0.1.5/show/docs/Guide.md">current file</a>)
+
+            </span>
+
+          <span class="line">
+            <button class="a-main footer-button display-quick-switch" title="Go to package docs">
+              Go to package docs
+            </button>
+
+              <a href="llms.txt" target="_blank">
+                View llms.txt
+              </a>
+
+
+              <a href="phoenix_lens.epub">
+                Download ePub version
+              </a>
+
+          </span>
+        </p>
+
+        <p class="built-using">
+          Built using
+          <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.40.4) for the
+
+            <a href="https://elixir-lang.org" title="Elixir" target="_blank" translate="no">Elixir programming language</a>
+
+        </p>
+
+
+    </footer>
+  </div>
+</main>
+</div>
+
+  </body>
+</html>

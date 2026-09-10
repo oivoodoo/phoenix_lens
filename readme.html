@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.40.4">
+    <meta name="project" content="phoenix_lens v0.1.5">
+
+
+    <title>Lens (phoenix_lens) — phoenix_lens v0.1.5</title>
+
+    <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
+
+    <script defer src="dist/sidebar_items-43FC3EA9.js"></script>
+    <script defer src="docs_config.js"></script>
+    <script defer src="dist/html-MI33G4N7.js"></script>
+
+  </head>
+  <body>
+    <script>(()=>{var t="ex_doc:settings",e="dark";var o="dark",s="light";var E="sidebar_state",n="closed";var r="sidebar_width";var a="sidebar-open";var i=new URLSearchParams(window.location.search),S=i.get("theme")||JSON.parse(localStorage.getItem(t)||"{}").theme;(S===o||S!==s&&window.matchMedia("(prefers-color-scheme: dark)").matches)&&document.body.classList.add(e);var d=sessionStorage.getItem(E),A=d!==n&&!window.matchMedia(`screen and (max-width: ${768}px)`).matches;document.body.classList.toggle(a,A);var c=sessionStorage.getItem(r);c&&document.body.style.setProperty("--sidebarWidth",`${c}px`);var p=/(Macintosh|iPhone|iPad|iPod)/.test(window.navigator.userAgent);document.documentElement.classList.toggle("apple-os",p);})();
+</script>
+
+<div class="body-wrapper">
+
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
+
+<nav id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
+
+      <div>
+        <a href="https://oivoodoo.github.io/phoenix_lens" class="sidebar-projectName" translate="no">
+phoenix_lens
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v0.1.5
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-list-nav" class="sidebar-list-nav" role="tablist" data-extras="Pages"></ul>
+  </div>
+</nav>
+
+<output role="status" id="toast"></output>
+
+<main class="content page-extra" id="main" data-type="extras">
+  <div id="content" class="content-inner">
+    <div class="top-search">
+      <div class="search-settings">
+        <form class="search-bar" action="search.html">
+          <label class="search-label">
+            <span class="sr-only">Search documentation of phoenix_lens</span>
+            <div class="search-input-wrapper">
+              <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+              <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+                <i class="ri-close-line ri-lg" title="Cancel search"></i>
+              </button>
+            </div>
+          </label>
+        </form>
+        <div class="autocomplete">
+        </div>
+        <div class="engine-selector" data-multiple="false">
+          <button type="button" class="engine-button" aria-label="Select search engine" aria-haspopup="true" aria-expanded="false">
+            <i class="ri-search-2-line" aria-hidden="true"></i>
+            <span class="engine-name">Default</span>
+            <i class="ri-arrow-down-s-line" aria-hidden="true"></i>
+          </button>
+          <div class="engine-dropdown" hidden role="menu">
+
+              <button type="button"
+                      class="engine-option"
+                      data-engine-url="search.html?q="
+                      role="menuitemradio"
+                      aria-checked="true">
+                <span class="name">Default</span>
+                <span class="help">In-browser search</span>
+              </button>
+
+          </div>
+        </div>
+        <button class="icon-settings display-settings">
+          <i class="ri-settings-3-line"></i>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+
+<div id="top-content">
+  <div class="heading-with-actions top-heading">
+    <h1>Lens (<code class="inline">phoenix_lens</code>)</h1>
+
+<a href="readme.md" title="Copy Markdown (hold Ctrl/Cmd and click it to open as Markdown)" class="copy-markdown icon-action" rel="help">
+  <i class="ri-markdown-line" aria-hidden="true"></i>
+  <span class="sr-only">Copy Markdown</span>
+</a>
+
+
+      <a href="https://github.com/oivoodoo/phoenix_lens/blob/v0.1.5/README.md#L1" title="View Source" class="icon-action" rel="help nofollow">
+        <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        <span class="sr-only">View Source</span>
+      </a>
+
+  </div>
+
+
+<p>Mountable SQL notebook for Phoenix. Point it at your Ecto Repo, save questions, pin dashboards, and <strong>mask PII/PHI in every output</strong>.</p><p>This is not Metabase. It is the PgHero-shaped tool you mount at <code class="inline">/lens</code> so you can stop giving a sidecar JVM a god-mode DB user.</p><h2 id="ui" class="section-heading"><a href="#ui" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">UI</span></h2><p>Dummy app on <a rel="nofollow" href="http://localhost:4000/lens">http://localhost:4000/lens</a>. Full tour: <a href="guide.html">docs/Guide.md</a>.</p><p><img src="docs/images/home.png" alt="Home"/></p><p>Home: table x-rays and pinned dashboards.</p><p><img src="docs/images/ask-sql.png" alt="Native SQL with masked cells"/></p><p>Native query: <code class="inline">email AS contact</code> is still <code class="inline">[redacted]</code>.</p><p><img src="docs/images/ask-notebook.png" alt="Notebook"/></p><p>Notebook: filters, metrics, grouping, then a chart.</p><p><img src="docs/images/dashboard.png" alt="Dashboard"/></p><p>Dashboard: cards on a 12-column board. <strong>Edit</strong> to drag and resize.</p><p><img src="docs/images/catalog.png" alt="Catalog"/></p><p>Data catalog, with protected columns marked.</p><p><img src="docs/images/settings-postgresql.png" alt="Settings"/></p><p>Settings: PostgreSQL or DuckDB, extra sources, audit retention.</p><p><img src="docs/images/settings-protection.png" alt="Column protection"/></p><p>Column protection on top of <code class="inline">masked_fields</code> and Ecto <code class="inline">redact: true</code>.</p><p><img src="docs/images/settings-mcp.png" alt="MCP tokens"/></p><p>MCP project tokens for agents.</p><p><img src="docs/images/question-alert.png" alt="Alerts"/></p><p>Alerts on a saved question (email or webhook).</p><p><img src="docs/images/settings-security.png" alt="Security"/></p><p>Optional authenticator app and passkeys.</p><h2 id="install" class="section-heading"><a href="#install" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Install</span></h2><pre><code class="makeup elixir" translate="no"><span class="kd">def</span><span class="w"> </span><span class="nf">deps</span><span class="w"> </span><span class="k" data-group-id="group-1">do</span><span class="w">
+  </span><span class="p" data-group-id="group-2">[</span><span class="p" data-group-id="group-3">{</span><span class="ss">:phoenix_lens</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;~&gt; 0.1.5&quot;</span><span class="p" data-group-id="group-3">}</span><span class="p" data-group-id="group-2">]</span><span class="w">
+</span><span class="k" data-group-id="group-1">end</span></code></pre><pre><code class="makeup elixir" translate="no"><span class="n">config</span><span class="w"> </span><span class="ss">:phoenix_lens</span><span class="p">,</span><span class="w">
+  </span><span class="ss">repo</span><span class="p">:</span><span class="w"> </span><span class="nc">MyApp.Repo</span><span class="p">,</span><span class="w">
+  </span><span class="ss">masked_fields</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="group-1">[</span><span class="ss">:email</span><span class="p">,</span><span class="w"> </span><span class="ss">:first_name</span><span class="p">,</span><span class="w"> </span><span class="ss">:last_name</span><span class="p">,</span><span class="w"> </span><span class="ss">:phone</span><span class="p" data-group-id="group-1">]</span></code></pre><p>Ecto fields marked <code class="inline">redact: true</code> are protected automatically.</p><pre><code class="makeup elixir" translate="no"><span class="kn">import</span><span class="w"> </span><span class="nc">PhoenixLensWeb.Router</span><span class="w">
+
+</span><span class="n">scope</span><span class="w"> </span><span class="s">&quot;/&quot;</span><span class="w"> </span><span class="k" data-group-id="group-1">do</span><span class="w">
+  </span><span class="n">pipe_through</span><span class="w"> </span><span class="p" data-group-id="group-2">[</span><span class="ss">:browser</span><span class="p">,</span><span class="w"> </span><span class="ss">:require_admin</span><span class="p" data-group-id="group-2">]</span><span class="w">
+  </span><span class="n">lens</span><span class="w"> </span><span class="s">&quot;/lens&quot;</span><span class="w">
+</span><span class="k" data-group-id="group-1">end</span></code></pre><pre><code class="makeup elixir" translate="no"><span class="kd">defmodule</span><span class="w"> </span><span class="nc">MyApp.Repo.Migrations.AddPhoenixLens</span><span class="w"> </span><span class="k" data-group-id="group-1">do</span><span class="w">
+  </span><span class="kn">use</span><span class="w"> </span><span class="nc">Ecto.Migration</span><span class="w">
+  </span><span class="kd">def</span><span class="w"> </span><span class="nf">up</span><span class="p">,</span><span class="w"> </span><span class="ss">do</span><span class="p">:</span><span class="w"> </span><span class="nc">PhoenixLens.Migrations</span><span class="o">.</span><span class="n">up</span><span class="p" data-group-id="group-2">(</span><span class="p" data-group-id="group-2">)</span><span class="w">
+  </span><span class="kd">def</span><span class="w"> </span><span class="nf">down</span><span class="p">,</span><span class="w"> </span><span class="ss">do</span><span class="p">:</span><span class="w"> </span><span class="nc">PhoenixLens.Migrations</span><span class="o">.</span><span class="n">down</span><span class="p" data-group-id="group-3">(</span><span class="p" data-group-id="group-3">)</span><span class="w">
+</span><span class="k" data-group-id="group-1">end</span></code></pre><p>Then open <code class="inline">/lens</code>. Prefer a read replica. Queries are <strong>view-only</strong>: <code class="inline">DELETE</code> / <code class="inline">UPDATE</code> / <code class="inline">INSERT</code> and other writes are rejected. Product tour, query design, and dummy-app screenshots: <a href="guide.html">docs/Guide.md</a>. Mount details: <a href="phoenix.html">docs/Phoenix.md</a>. MCP server (agents): <a href="mcp.html">docs/MCP.md</a>.</p><h2 id="duckdb-engine" class="section-heading"><a href="#duckdb-engine" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">DuckDB engine</span></h2><p>Default queries go straight to PostgreSQL. In <code class="inline">/lens/settings</code> you can switch the query engine to <strong>DuckDB</strong>. Lens then:</p><ol><li>Starts an in-process DuckDB</li><li>Attaches the host Ecto Repo read-only as <code class="inline">repo</code> (<code class="inline">INSTALL postgres; ATTACH … (TYPE postgres, READ_ONLY)</code>)</li><li>Lets you attach extra Postgres URLs, SQLite, DuckDB files, Parquet, CSV, or JSON to the <strong>same</strong> engine</li></ol><p>Host tables stay queryable as <code class="inline">users</code> or <code class="inline">repo.users</code>. Extra databases are <code class="inline">alias.table</code>. File sources become a view named after the alias.</p><p>Join across sources in one question, for example Postgres + MySQL + a remote CSV:</p><pre><code class="sql">SELECT u.id, b.sku, p.plan
+FROM repo.users u
+JOIN billing.orders b ON b.user_id = u.id
+JOIN plans p ON p.user_id = u.id</code></pre><p>DuckDB is optional. Add the NIF to the <strong>host</strong> app (the dummy app already does):</p><pre><code class="makeup elixir" translate="no"><span class="kd">def</span><span class="w"> </span><span class="nf">deps</span><span class="w"> </span><span class="k" data-group-id="group-1">do</span><span class="w">
+  </span><span class="p" data-group-id="group-2">[</span><span class="w">
+    </span><span class="p" data-group-id="group-3">{</span><span class="ss">:phoenix_lens</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;~&gt; 0.1.5&quot;</span><span class="p" data-group-id="group-3">}</span><span class="p">,</span><span class="w">
+    </span><span class="p" data-group-id="group-4">{</span><span class="ss">:duckdbex</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;~&gt; 0.4&quot;</span><span class="p" data-group-id="group-4">}</span><span class="w">
+  </span><span class="p" data-group-id="group-2">]</span><span class="w">
+</span><span class="k" data-group-id="group-1">end</span></code></pre><p>Questions, dashboards, settings, and the audit log still live on the host Repo. Field policy still runs on every DuckDB result.</p><h2 id="mcp-server" class="section-heading"><a href="#mcp-server" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">MCP server</span></h2><p>Agents can drive the same notebook over <a rel="nofollow" href="https://modelcontextprotocol.io">Model Context Protocol</a> at <code class="inline">/lens/mcp</code>. After <a href="https://plug.hexdocs.pm/1.20.3/Plug.Parsers.html"><code class="inline">Plug.Parsers</code></a> in the host endpoint:</p><pre><code class="makeup elixir" translate="no"><span class="n">plug</span><span class="w"> </span><span class="nc">PhoenixLensWeb.Plugs.MCP</span><span class="p">,</span><span class="w"> </span><span class="ss">path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/lens/mcp&quot;</span></code></pre><p><strong>Settings → MCP</strong> issues a project token id (<code class="inline">plt_…</code>) and a one-time secret (<code class="inline">lns_…</code>). Clients send <code class="inline">Authorization: Bearer &lt;secret&gt;</code>. Tools cover catalog, SQL, questions, dashboards, audit, engines, sources, and column protection. Masked cells stay <code class="inline">[redacted]</code>.</p><pre><code class="json">{
+  &quot;mcpServers&quot;: {
+    &quot;phoenix-lens&quot;: {
+      &quot;url&quot;: &quot;http://localhost:4000/lens/mcp&quot;,
+      &quot;headers&quot;: {
+        &quot;Authorization&quot;: &quot;Bearer lns_…&quot;
+      }
+    }
+  }
+}</code></pre><p>Details: <a href="mcp.html">docs/MCP.md</a>.</p><h2 id="alerts" class="section-heading"><a href="#alerts" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Alerts</span></h2><p>Saved questions can notify <strong>email</strong> or a <strong>webhook</strong> when they return rows, return none, or cross a numeric goal. Configure SMTP and webhook URLs in <strong>Settings → Integrations</strong>, then click <strong>Alert</strong> on a question.</p><p>Payloads are field-policy masked. Email sending needs <code class="inline">{:gen_smtp, &quot;~&gt; 1.2&quot;}</code> in the host app. See <a href="alerts.html">docs/Alerts.md</a>.</p><h2 id="security-lock" class="section-heading"><a href="#security-lock" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Security lock</span></h2><p><strong>Settings → Security</strong> can turn on an authenticator app (TOTP) and register passkeys. After either is enabled, the UI asks for that factor at <code class="inline">/lens/unlock</code>. This is an extra lock on the notebook, not a replacement for the host pipeline. MCP tokens skip it. If you lock yourself out: <code class="inline">PhoenixLens.Auth.reset!()</code> in IEx.</p><h2 id="dummy-app" class="section-heading"><a href="#dummy-app" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Dummy app</span></h2><pre><code class="makeup sh" translate="no"><span class="">cd dummy
+</span><span class="">docker compose up -d
+</span><span class="">mix setup
+</span><span class="">mix phx.server
+</span></code></pre><p>Open <a rel="nofollow" href="http://localhost:4000/lens">http://localhost:4000/lens</a> and run:</p><pre><code class="sql">SELECT id, email AS contact, first_name FROM users</code></pre><p><code class="inline">contact</code> and <code class="inline">first_name</code> render as <code class="inline">[redacted]</code>.</p><h2 id="compliance-posture" class="section-heading"><a href="#compliance-posture" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Compliance posture</span></h2><p>Designed so the dashboard path does not emit configured PII/PHI (grid, CSV, embeds, logs, audit). </p><p>This library is <strong>not</strong> HIPAA or GDPR certified. You are the operator. Mount behind your own auth, prefer a read replica, and do not confuse IEx/<code class="inline">Repo.get</code> with this dashboard.</p><p>Threat model: <a href="policy.html">docs/Policy.md</a>.</p><h2 id="standalone" class="section-heading"><a href="#standalone" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Standalone</span></h2><pre><code class="makeup sh" translate="no"><span class="">DATABASE_URL=postgres://user:pass@localhost/dbname mix phoenix_lens.server
+</span></code></pre><p>Then visit <code class="inline">http://localhost:8080/lens</code>.</p><h2 id="docs" class="section-heading"><a href="#docs" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Docs</span></h2><ul><li><a rel="nofollow" href="https://oivoodoo.github.io/phoenix_lens/guide.html">Guide</a> — features, query design, DuckDB vs PostgreSQL, screenshots (<a href="guide.html">source</a>)</li><li><a href="mcp.html">MCP</a> — agent endpoint, project tokens</li><li><a href="alerts.html">Alerts</a> — email and webhook notifications</li><li><a href="https://hexdocs.pm/phoenix_lens">HexDocs</a></li><li><a href="phoenix.html">Phoenix mount</a></li><li><a href="policy.html">Field policy</a></li><li><a href="permissions.html">Permissions</a> — host pipeline plus optional 2FA / passkeys</li><li><a href="docs/spec.md">Spec</a></li></ul>
+
+</div>
+
+<div class="bottom-actions" id="bottom-actions">
+  <div class="bottom-actions-item">
+
+  </div>
+  <div class="bottom-actions-item">
+
+      <a href="changelog.html" class="bottom-actions-button" rel="next">
+        <span class="subheader">
+          Next Page →
+        </span>
+        <span class="title">
+Changelog
+        </span>
+      </a>
+
+  </div>
+</div>
+    <footer class="footer">
+
+        <p>
+
+            <span class="line">
+              <a href="https://hex.pm/packages/phoenix_lens/0.1.5">Hex Package</a>
+
+              <a href="https://preview.hex.pm/preview/phoenix_lens/0.1.5">Hex Preview</a>
+
+                (<a href="https://preview.hex.pm/preview/phoenix_lens/0.1.5/show/README.md">current file</a>)
+
+            </span>
+
+          <span class="line">
+            <button class="a-main footer-button display-quick-switch" title="Go to package docs">
+              Go to package docs
+            </button>
+
+              <a href="llms.txt" target="_blank">
+                View llms.txt
+              </a>
+
+
+              <a href="phoenix_lens.epub">
+                Download ePub version
+              </a>
+
+          </span>
+        </p>
+
+        <p class="built-using">
+          Built using
+          <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.40.4) for the
+
+            <a href="https://elixir-lang.org" title="Elixir" target="_blank" translate="no">Elixir programming language</a>
+
+        </p>
+
+
+    </footer>
+  </div>
+</main>
+</div>
+
+  </body>
+</html>
