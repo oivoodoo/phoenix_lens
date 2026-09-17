@@ -52,7 +52,7 @@ Optional authenticator app and passkeys.
 
 ```elixir
 def deps do
-  [{:phoenix_lens, "~> 0.1.5"}]
+  [{:phoenix_lens, "~> 0.1.6"}]
 end
 ```
 
@@ -107,7 +107,7 @@ DuckDB is optional. Add the NIF to the **host** app (the dummy app already does)
 ```elixir
 def deps do
   [
-    {:phoenix_lens, "~> 0.1.5"},
+    {:phoenix_lens, "~> 0.1.6"},
     {:duckdbex, "~> 0.4"}
   ]
 end
