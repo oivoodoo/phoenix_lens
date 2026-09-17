@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Serve `phoenix.js` and `phoenix_live_view.js` from the host app so Lens matches the LiveView version that compiled its templates. A vendored 1.2 client against a 1.0 host rendered catalog fields as `undefined`.
+
 ## 0.1.5
 
 - Tighten view-only SQL: reject `UPDATE`, writable CTEs, and `SELECT … FOR UPDATE` as well as `DELETE` / `INSERT`.

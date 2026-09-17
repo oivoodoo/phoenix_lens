@@ -31,10 +31,14 @@ defmodule PhoenixLensWeb.Helpers do
   end
 
   defp asset_vsn do
-    case Application.spec(:phoenix_lens, :vsn) do
+    Enum.join([app_vsn(:phoenix_lens), app_vsn(:phoenix_live_view)], "-lv")
+  end
+
+  defp app_vsn(app) do
+    case Application.spec(app, :vsn) do
       vsn when is_list(vsn) -> List.to_string(vsn)
       vsn when is_binary(vsn) -> vsn
-      _ -> "1"
+      _ -> "0"
     end
   end
 

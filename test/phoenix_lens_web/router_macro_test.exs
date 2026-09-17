@@ -45,6 +45,23 @@ defmodule PhoenixLensWeb.RouterMacroTest do
     assert conn.status in [404, 500]
   end
 
+  test "serves host LiveView JS so catalog comprehensions hydrate" do
+    Application.put_env(:phoenix_lens, :repo, Foo.Repo)
+
+    conn =
+      Phoenix.ConnTest.build_conn()
+      |> Phoenix.ConnTest.dispatch(
+        PhoenixLens.TestEndpoint,
+        :get,
+        "/lens/assets/phoenix_live_view.js"
+      )
+
+    host_js = Application.app_dir(:phoenix_live_view, "priv/static/phoenix_live_view.js")
+
+    assert conn.status == 200
+    assert conn.resp_body == File.read!(host_js)
+  end
+
   test "serves CSS under a nested Phoenix scope" do
     Application.put_env(:phoenix_lens, :repo, Foo.Repo)
 
