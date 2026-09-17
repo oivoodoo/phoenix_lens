@@ -27,7 +27,7 @@ defmodule PhoenixLensWeb.Helpers do
     prefix = prefix(socket_or_conn)
     path = Path.join(prefix, "assets/#{file}") |> String.replace(~r{/+}, "/")
     path = if String.starts_with?(path, "/"), do: path, else: "/" <> path
-    path <> "?v=#{asset_vsn()}.g"
+    path <> "?v=#{asset_vsn()}.hl"
   end
 
   defp asset_vsn do

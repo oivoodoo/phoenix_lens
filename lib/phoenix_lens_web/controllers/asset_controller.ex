@@ -27,7 +27,7 @@ defmodule PhoenixLensWeb.AssetController do
           path ->
             conn
             |> put_resp_content_type(content_type)
-            |> put_resp_header("cache-control", "public, max-age=3600, must-revalidate")
+            |> put_resp_header("cache-control", "no-cache")
             |> send_file(200, path)
         end
     end

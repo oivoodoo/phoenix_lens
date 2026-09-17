@@ -510,14 +510,53 @@ a.ghost.is-on {
   border-color: var(--brand);
   box-shadow: 0 0 0 3px rgba(4, 169, 245, 0.22);
 }
+.lens-sql-pane { position: relative; }
 .lens-ask textarea,
-.lens-sql textarea {
+.lens-sql textarea,
+.lens-sql-hl {
   width: 100%;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 13px;
+  line-height: 1.5;
+  tab-size: 2;
   border: 0;
   border-radius: 0;
   padding: 12px;
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  box-sizing: border-box;
+}
+.lens-sql-hl {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: auto;
+  pointer-events: none;
+  color: var(--text-dark);
+  background: transparent;
+  scrollbar-width: none;
+}
+.lens-sql-hl::-webkit-scrollbar { display: none; }
+.lens-sql textarea,
+.lens-ask .lens-sql textarea {
+  position: relative;
+  z-index: 1;
+  background: #fbfcfd;
+  color: var(--text-dark);
+  -webkit-text-fill-color: var(--text-dark);
+  caret-color: var(--text-dark);
+  min-height: 160px;
+  display: block;
+  resize: vertical;
+  overflow: auto;
+}
+.lens-sql:has(.lens-sql-hl:not(:empty)) textarea,
+.lens-ask .lens-sql:has(.lens-sql-hl:not(:empty)) textarea {
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+.lens-ask textarea {
   background: #fbfcfd;
   color: var(--text-dark);
   min-height: 160px;
@@ -525,6 +564,17 @@ a.ghost.is-on {
   resize: vertical;
 }
 .lens-sql textarea:focus { outline: none; box-shadow: none; }
+.lens-sql textarea::selection,
+.lens-ask .lens-sql textarea::selection {
+  background: rgba(4, 169, 245, 0.28);
+  color: transparent;
+}
+.lens-sql-hl .sql-kw { color: #038fc7; }
+.lens-sql-hl .sql-str { color: #c43b7a; }
+.lens-sql-hl .sql-cmt { color: var(--muted); }
+.lens-sql-hl .sql-num { color: #d97706; }
+.lens-sql-hl .sql-tbl { color: #0f9d7a; }
+.lens-sql-hl .sql-id { color: #3f4d67; }
 .lens-sql-foot {
   display: flex;
   justify-content: flex-end;

@@ -4,6 +4,7 @@
 
 - Serve `phoenix.js` and `phoenix_live_view.js` from the host app so Lens matches the LiveView version that compiled its templates. A vendored 1.2 client against a 1.0 host rendered catalog fields as `undefined`.
 - Encode Postgres uuid/bytea binaries before they hit LiveView assigns so `SELECT *` does not crash Jason.
+- Syntax-highlight native SQL in the editor (keywords, strings, comments, numbers, catalog tables).
 
 ## 0.1.5
 

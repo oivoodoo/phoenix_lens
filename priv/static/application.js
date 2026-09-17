@@ -82,24 +82,153 @@
     return { value: left + right, cursor: left.length };
   }
 
+  var SQL_KW = {
+    SELECT: 1, FROM: 1, WHERE: 1, GROUP: 1, BY: 1, ORDER: 1, LIMIT: 1, OFFSET: 1,
+    JOIN: 1, LEFT: 1, RIGHT: 1, INNER: 1, OUTER: 1, FULL: 1, CROSS: 1, ON: 1,
+    AND: 1, OR: 1, NOT: 1, AS: 1, DISTINCT: 1, COUNT: 1, SUM: 1, AVG: 1, MIN: 1,
+    MAX: 1, HAVING: 1, UNION: 1, ALL: 1, EXISTS: 1, IN: 1, IS: 1, NULL: 1,
+    TRUE: 1, FALSE: 1, CASE: 1, WHEN: 1, THEN: 1, ELSE: 1, END: 1, ASC: 1,
+    DESC: 1, WITH: 1, BETWEEN: 1, LIKE: 1, ILIKE: 1, CAST: 1, COALESCE: 1,
+    NULLIF: 1, OVER: 1, PARTITION: 1, WINDOW: 1, FILTER: 1, LATERAL: 1,
+    RECURSIVE: 1, USING: 1, NATURAL: 1, VALUES: 1, RETURNING: 1, INTERVAL: 1
+  };
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function highlightSql(sql, tables) {
+    var tableSet = {};
+    (tables || []).forEach(function (t) {
+      if (t && t.name) tableSet[String(t.name).toLowerCase()] = 1;
+    });
+    var out = [];
+    var i = 0;
+    var n = sql.length;
+    while (i < n) {
+      var c = sql.charAt(i);
+      var next = sql.charAt(i + 1);
+      if (c === "-" && next === "-") {
+        var nl = sql.indexOf("\n", i);
+        var end = nl < 0 ? n : nl;
+        out.push('<span class="sql-cmt">' + escapeHtml(sql.slice(i, end)) + "</span>");
+        i = end;
+        continue;
+      }
+      if (c === "/" && next === "*") {
+        var close = sql.indexOf("*/", i + 2);
+        var endB = close < 0 ? n : close + 2;
+        out.push('<span class="sql-cmt">' + escapeHtml(sql.slice(i, endB)) + "</span>");
+        i = endB;
+        continue;
+      }
+      if (c === "'") {
+        var j = i + 1;
+        while (j < n) {
+          if (sql.charAt(j) === "'") {
+            if (sql.charAt(j + 1) === "'") {
+              j += 2;
+              continue;
+            }
+            j += 1;
+            break;
+          }
+          j += 1;
+        }
+        out.push('<span class="sql-str">' + escapeHtml(sql.slice(i, j)) + "</span>");
+        i = j;
+        continue;
+      }
+      if (c === '"') {
+        var q = i + 1;
+        while (q < n && sql.charAt(q) !== '"') q += 1;
+        if (q < n) q += 1;
+        out.push('<span class="sql-id">' + escapeHtml(sql.slice(i, q)) + "</span>");
+        i = q;
+        continue;
+      }
+      if (c === "$") {
+        var tag = sql.slice(i).match(/^\$[A-Za-z0-9_]*\$/);
+        if (tag) {
+          var stop = sql.indexOf(tag[0], i + tag[0].length);
+          var d = stop < 0 ? n : stop + tag[0].length;
+          out.push('<span class="sql-str">' + escapeHtml(sql.slice(i, d)) + "</span>");
+          i = d;
+          continue;
+        }
+      }
+      if ((c >= "0" && c <= "9") || (c === "." && next >= "0" && next <= "9")) {
+        var k = i;
+        while (k < n && ((sql.charAt(k) >= "0" && sql.charAt(k) <= "9") || sql.charAt(k) === ".")) k += 1;
+        out.push('<span class="sql-num">' + escapeHtml(sql.slice(i, k)) + "</span>");
+        i = k;
+        continue;
+      }
+      if ((c >= "A" && c <= "Z") || (c >= "a" && c <= "z") || c === "_") {
+        var w = i + 1;
+        while (w < n) {
+          var ch = sql.charAt(w);
+          if (
+            (ch >= "A" && ch <= "Z") ||
+            (ch >= "a" && ch <= "z") ||
+            (ch >= "0" && ch <= "9") ||
+            ch === "_"
+          ) {
+            w += 1;
+          } else break;
+        }
+        var word = sql.slice(i, w);
+        var cls = SQL_KW[word.toUpperCase()]
+          ? "sql-kw"
+          : tableSet[word.toLowerCase()]
+            ? "sql-tbl"
+            : null;
+        out.push(cls ? '<span class="' + cls + '">' + escapeHtml(word) + "</span>" : escapeHtml(word));
+        i = w;
+        continue;
+      }
+      out.push(escapeHtml(c));
+      i += 1;
+    }
+    return out.join("") + "\n";
+  }
+
   var SqlEditor = {
     mounted: function () {
       var el = this.el;
       this.catalog = parseCatalog(el.dataset.catalog);
       this.index = 0;
       this.items = [];
+      this.hl = el.parentNode.querySelector(".lens-sql-hl");
+      if (!this.hl) {
+        var pane = document.createElement("div");
+        pane.className = "lens-sql-pane";
+        this.hl = document.createElement("pre");
+        this.hl.className = "lens-sql-hl";
+        this.hl.setAttribute("aria-hidden", "true");
+        el.parentNode.insertBefore(pane, el);
+        pane.appendChild(this.hl);
+        pane.appendChild(el);
+      }
       this.menu = document.createElement("ul");
       this.menu.className = "lens-ac";
       this.menu.hidden = true;
-      el.parentNode.appendChild(this.menu);
+      var wrap = el.closest(".lens-sql") || el.parentNode;
+      wrap.classList.add("is-hl");
+      wrap.appendChild(this.menu);
       var self = this;
-      el.addEventListener("input", function () { self.refresh(); });
+      el.addEventListener("input", function () { self.refresh(); self.paint(); });
+      el.addEventListener("scroll", function () { self.syncScroll(); });
       el.addEventListener("click", function () { self.refresh(); });
       el.addEventListener("keydown", function (e) { self.onKey(e); });
       el.addEventListener("blur", function () {
         setTimeout(function () { self.hide(); }, 120);
       });
-      var run = el.parentNode.querySelector("[data-sql-run]");
+      if (window.ResizeObserver) {
+        this.ro = new ResizeObserver(function () { self.syncScroll(); });
+        this.ro.observe(el);
+      }
+      var run = wrap.querySelector("[data-sql-run]");
       if (run) {
         run.addEventListener("click", function (e) {
           e.preventDefault();
@@ -107,9 +236,21 @@
           self.pushEvent("run", { sql: el.value });
         });
       }
+      this.paint();
     },
     destroyed: function () {
       if (this.menu && this.menu.parentNode) this.menu.parentNode.removeChild(this.menu);
+      if (this.ro) this.ro.disconnect();
+    },
+    paint: function () {
+      if (!this.hl) return;
+      this.hl.innerHTML = highlightSql(this.el.value, this.catalog.tables);
+      this.syncScroll();
+    },
+    syncScroll: function () {
+      if (!this.hl) return;
+      this.hl.scrollTop = this.el.scrollTop;
+      this.hl.scrollLeft = this.el.scrollLeft;
     },
     refresh: function () {
       var el = this.el;
@@ -181,6 +322,7 @@
       el.value = next.value;
       el.setSelectionRange(next.cursor, next.cursor);
       el.dispatchEvent(new Event("input", { bubbles: true }));
+      this.paint();
       this.hide();
       el.focus();
     }

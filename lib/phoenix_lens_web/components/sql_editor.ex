@@ -13,16 +13,19 @@ defmodule PhoenixLensWeb.Components.SqlEditor do
 
     ~H"""
     <div class="lens-sql" id={@id <> "-wrap"} phx-update="ignore">
-      <textarea
-        id={@id}
-        name={@name}
-        rows={@rows}
-        spellcheck="false"
-        phx-hook="SqlEditor"
-        data-catalog={@catalog_json}
-        autocomplete="off"
-        autocapitalize="off"
-      >{@value}</textarea>
+      <div class="lens-sql-pane">
+        <pre class="lens-sql-hl" aria-hidden="true"></pre>
+        <textarea
+          id={@id}
+          name={@name}
+          rows={@rows}
+          spellcheck="false"
+          phx-hook="SqlEditor"
+          data-catalog={@catalog_json}
+          autocomplete="off"
+          autocapitalize="off"
+        >{@value}</textarea>
+      </div>
       <div class="lens-sql-foot">
         <span class="lens-kbd-hint">Ctrl+Enter</span>
         <button type="button" class="lens-sql-run" data-sql-run>
