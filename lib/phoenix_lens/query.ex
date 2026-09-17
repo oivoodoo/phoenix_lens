@@ -166,6 +166,7 @@ defmodule PhoenixLens.Query do
       database_id: database_id,
       sql: sql
     }
+    |> Result.sanitize()
   end
 
   defp to_string_id(nil), do: "primary"
