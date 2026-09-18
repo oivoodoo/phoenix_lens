@@ -91,7 +91,18 @@ docker push oivoodoo/phoenix_lens:$VERSION
 docker push oivoodoo/phoenix_lens:latest
 ```
 
-GitHub Actions (`.github/workflows/docker.yml`) builds on `main` and version tags. Pushing to Docker Hub needs repository secrets `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`.
+GitHub Actions (`.github/workflows/docker.yml`) builds on `main` and version tags.
+
+Pushing from CI needs a **Docker Hub personal access token** with **Read & Write** (or Read, Write, Delete). An account password or a read-only token fails with `401 Unauthorized: access token has insufficient scopes`.
+
+1. [hub.docker.com](https://hub.docker.com) → Account Settings → Personal access tokens → Generate
+2. Access permissions: **Read & Write**
+3. GitHub repo → Settings → Secrets and variables → Actions:
+
+   - `DOCKERHUB_USERNAME` — Hub username (`oivoodoo`)
+   - `DOCKERHUB_TOKEN` — the access token, not the account password
+
+Then re-run the failed Docker workflow.
 
 Health check: `GET /health` returns `200 ok` when Postgres answers.
 
