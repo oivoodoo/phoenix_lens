@@ -1,0 +1,50 @@
+# Changelog
+
+## Unreleased
+
+## 0.1.7
+
+- Keep email/phone literals in saved question SQL; mask protected columns in result cells only (audit log still redacts SQL literals).
+- Standalone Docker image (`oivoodoo/phoenix_lens`): Mix release, Postgres env vars, first-boot operator login, optional SMTP email 2FA, optional HTTP basic auth, and `PORT`.
+- Docker Compose example bind-mounts `./data` to `/data` so CSV, Parquet, and other DuckDB sources on the host are visible in the container.
+
+## 0.1.6
+
+- Serve `phoenix.js` and `phoenix_live_view.js` from the host app so Lens matches the LiveView version that compiled its templates. A vendored 1.2 client against a 1.0 host rendered catalog fields as `undefined`.
+- Encode Postgres uuid/bytea binaries before they hit LiveView assigns so `SELECT *` does not crash Jason.
+- Syntax-highlight native SQL in the editor (keywords, strings, comments, numbers, catalog tables).
+
+## 0.1.5
+
+- Tighten view-only SQL: reject `UPDATE`, writable CTEs, and `SELECT … FOR UPDATE` as well as `DELETE` / `INSERT`.
+- README UI screenshots from the dummy app.
+
+## 0.1.4
+
+- Dashboard **Edit** mode: drag cards to move them and resize on a 12-column board, then Save.
+- Date-range filter bar with space between title, filters, and cards.
+
+## 0.1.3
+
+- MCP server at `/lens/mcp` (Streamable HTTP JSON-RPC) covering catalog, SQL, questions, dashboards, audit, engines, sources, and column protection.
+- Settings → MCP issues project token ids (`plt_…`) and one-time secrets (`lns_…`) for Bearer auth.
+- Alerts on saved questions (rows / no rows / above / below) delivered by email (SMTP) and webhooks. Integrations live in Settings.
+- Optional authenticator-app TOTP and passkey unlock in Settings → Security. MCP tokens skip the UI lock.
+
+## 0.1.2
+
+- Guide covering features, query design, DuckDB vs PostgreSQL, with dummy-app screenshots.
+- Publish the guide and screenshots on HexDocs and GitHub Pages (`https://oivoodoo.github.io/phoenix_lens`).
+
+## 0.1.1
+
+- Notebook query builder, native SQL editor, Ctrl+Enter / Run, and in-place dashboard titles.
+- Optional DuckDB engine: attach the host Repo as `repo` plus Postgres, MySQL, SQLite, DuckDB files, Parquet, CSV, and JSON; join them in one SELECT.
+- Settings for engine, extra sources, audit retention, and a Column protection page (global, per source, per table).
+- Audit log pagination and configurable retention (default 90 days).
+- Charts (bar, line, pie, combo) with numeric/count axes; CSV/JSON export.
+- Field policy tests for aliases, per-table rules, and `Query.run`.
+
+## 0.1.0
+
+- Initial release: SQL notebook, saved questions, dashboards, field policy, audit log.

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.40.4">
+    <meta name="project" content="phoenix_lens v0.1.7">
+
+
+    <title>Standalone Docker — phoenix_lens v0.1.7</title>
+
+    <link rel="stylesheet" href="dist/html-elixir-RXHHCTJW.css" />
+
+    <script defer src="dist/sidebar_items-E06E3773.js"></script>
+    <script defer src="docs_config.js"></script>
+    <script defer src="dist/html-MI33G4N7.js"></script>
+
+  </head>
+  <body>
+    <script>(()=>{var t="ex_doc:settings",e="dark";var o="dark",s="light";var E="sidebar_state",n="closed";var r="sidebar_width";var a="sidebar-open";var i=new URLSearchParams(window.location.search),S=i.get("theme")||JSON.parse(localStorage.getItem(t)||"{}").theme;(S===o||S!==s&&window.matchMedia("(prefers-color-scheme: dark)").matches)&&document.body.classList.add(e);var d=sessionStorage.getItem(E),A=d!==n&&!window.matchMedia(`screen and (max-width: ${768}px)`).matches;document.body.classList.toggle(a,A);var c=sessionStorage.getItem(r);c&&document.body.style.setProperty("--sidebarWidth",`${c}px`);var p=/(Macintosh|iPhone|iPad|iPod)/.test(window.navigator.userAgent);document.documentElement.classList.toggle("apple-os",p);})();
+</script>
+
+<div class="body-wrapper">
+
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
+
+<nav id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
+
+      <div>
+        <a href="https://oivoodoo.github.io/phoenix_lens" class="sidebar-projectName" translate="no">
+phoenix_lens
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v0.1.7
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-list-nav" class="sidebar-list-nav" role="tablist" data-extras="Pages"></ul>
+  </div>
+</nav>
+
+<output role="status" id="toast"></output>
+
+<main class="content page-extra" id="main" data-type="extras">
+  <div id="content" class="content-inner">
+    <div class="top-search">
+      <div class="search-settings">
+        <form class="search-bar" action="search.html">
+          <label class="search-label">
+            <span class="sr-only">Search documentation of phoenix_lens</span>
+            <div class="search-input-wrapper">
+              <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+              <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+                <i class="ri-close-line ri-lg" title="Cancel search"></i>
+              </button>
+            </div>
+          </label>
+        </form>
+        <div class="autocomplete">
+        </div>
+        <div class="engine-selector" data-multiple="false">
+          <button type="button" class="engine-button" aria-label="Select search engine" aria-haspopup="true" aria-expanded="false">
+            <i class="ri-search-2-line" aria-hidden="true"></i>
+            <span class="engine-name">Default</span>
+            <i class="ri-arrow-down-s-line" aria-hidden="true"></i>
+          </button>
+          <div class="engine-dropdown" hidden role="menu">
+
+              <button type="button"
+                      class="engine-option"
+                      data-engine-url="search.html?q="
+                      role="menuitemradio"
+                      aria-checked="true">
+                <span class="name">Default</span>
+                <span class="help">In-browser search</span>
+              </button>
+
+          </div>
+        </div>
+        <button class="icon-settings display-settings">
+          <i class="ri-settings-3-line"></i>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+
+<div id="top-content">
+  <div class="heading-with-actions top-heading">
+    <h1>Standalone Docker</h1>
+
+<a href="docker.md" title="Copy Markdown (hold Ctrl/Cmd and click it to open as Markdown)" class="copy-markdown icon-action" rel="help">
+  <i class="ri-markdown-line" aria-hidden="true"></i>
+  <span class="sr-only">Copy Markdown</span>
+</a>
+
+
+      <a href="https://github.com/oivoodoo/phoenix_lens/blob/v0.1.7/docs/Docker.md#L1" title="View Source" class="icon-action" rel="help nofollow">
+        <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        <span class="sr-only">View Source</span>
+      </a>
+
+  </div>
+
+
+<p>Run Lens as its own app against Postgres, without mounting it in a Phoenix host.</p><p>Image: <a rel="nofollow" href="https://hub.docker.com/r/oivoodoo/phoenix_lens"><code class="inline">oivoodoo/phoenix_lens</code></a>.</p><pre><code class="makeup sh" translate="no"><span class="">docker run --rm -p 8080:8080 \
+</span><span class="">  -e POSTGRES_HOST=host.docker.internal \
+</span><span class="">  -e POSTGRES_USER=postgres \
+</span><span class="">  -e POSTGRES_PASSWORD=postgres \
+</span><span class="">  -e POSTGRES_DB=app \
+</span><span class="">  oivoodoo/phoenix_lens
+</span></code></pre><p>Open <a rel="nofollow" href="http://localhost:8080/lens">http://localhost:8080/lens</a>. The first visit is <strong>Set up Lens</strong>: create the operator username and password you will use to sign in.</p><p>On Linux, pass <code class="inline">--add-host=host.docker.internal:host-gateway</code> so <code class="inline">POSTGRES_HOST=host.docker.internal</code> reaches Postgres on the host.</p><p>Or with Compose from this repo (Postgres + a <strong>shared folder</strong> at <code class="inline">./data</code> → <code class="inline">/data</code>):</p><pre><code class="makeup sh" translate="no"><span class="">mkdir -p data
+</span><span class="">docker compose up --build
+</span></code></pre><p>Drop CSV, Parquet, JSON, SQLite, or DuckDB files into <code class="inline">./data</code>. In <strong>Settings → Sources</strong> attach them as <code class="inline">/data/yourfile.csv</code> (same for <code class="inline">.parquet</code>, <code class="inline">.json</code>, <code class="inline">.sqlite</code>, <code class="inline">.duckdb</code>).</p><p>Using only the published image, copy <a href="../examples/docker-compose.yml">examples/docker-compose.yml</a>:</p><pre><code class="makeup sh" translate="no"><span class="">mkdir -p data
+</span><span class="">docker compose -f examples/docker-compose.yml up
+</span></code></pre><p>Point the shared folder at another host directory with <code class="inline">LENS_SHARED_DIR=/path/to/exports</code>. Files must be world-readable; the container runs as <code class="inline">nobody</code>.</p><h2 id="environment" class="section-heading"><a href="#environment" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Environment</span></h2><table><thead><tr><th style="text-align: left;">Variable</th><th style="text-align: left;">Required</th><th style="text-align: left;">Default</th><th style="text-align: left;">Purpose</th></tr></thead><tbody><tr><td style="text-align: left;"><code class="inline">DATABASE_URL</code></td><td style="text-align: left;">one of URL or host</td><td style="text-align: left;"></td><td style="text-align: left;"><code class="inline">postgres://user:pass@host:5432/db</code></td></tr><tr><td style="text-align: left;"><code class="inline">POSTGRES_HOST</code></td><td style="text-align: left;">one of URL or host</td><td style="text-align: left;"></td><td style="text-align: left;">Hostname when not using <code class="inline">DATABASE_URL</code></td></tr><tr><td style="text-align: left;"><code class="inline">POSTGRES_PORT</code></td><td style="text-align: left;"></td><td style="text-align: left;"><code class="inline">5432</code></td><td style="text-align: left;"></td></tr><tr><td style="text-align: left;"><code class="inline">POSTGRES_USER</code></td><td style="text-align: left;"></td><td style="text-align: left;"><code class="inline">postgres</code></td><td style="text-align: left;"></td></tr><tr><td style="text-align: left;"><code class="inline">POSTGRES_PASSWORD</code></td><td style="text-align: left;"></td><td style="text-align: left;"></td><td style="text-align: left;"></td></tr><tr><td style="text-align: left;"><code class="inline">POSTGRES_DB</code></td><td style="text-align: left;"></td><td style="text-align: left;"><code class="inline">postgres</code></td><td style="text-align: left;"></td></tr><tr><td style="text-align: left;"><code class="inline">PORT</code></td><td style="text-align: left;"></td><td style="text-align: left;"><code class="inline">8080</code></td><td style="text-align: left;">HTTP listen port</td></tr><tr><td style="text-align: left;"><code class="inline">PHX_HOST</code></td><td style="text-align: left;"></td><td style="text-align: left;"><code class="inline">localhost</code></td><td style="text-align: left;">Public hostname for URLs and passkeys</td></tr><tr><td style="text-align: left;"><code class="inline">PHX_SCHEME</code></td><td style="text-align: left;"></td><td style="text-align: left;"><code class="inline">http</code></td><td style="text-align: left;"><code class="inline">https</code> behind a TLS proxy</td></tr><tr><td style="text-align: left;"><code class="inline">SECRET_KEY_BASE</code></td><td style="text-align: left;">recommended</td><td style="text-align: left;">random</td><td style="text-align: left;">Cookie signing; generate with <a href="https://phoenix.hexdocs.pm/1.8.13/Mix.Tasks.Phx.Gen.Secret.html"><code class="inline">mix phx.gen.secret</code></a>. If omitted, sessions reset when the container restarts.</td></tr><tr><td style="text-align: left;"><code class="inline">HTTP_BASIC_USERNAME</code> / <code class="inline">HTTP_BASIC_PASSWORD</code></td><td style="text-align: left;"></td><td style="text-align: left;"></td><td style="text-align: left;">Extra HTTP basic auth (also <code class="inline">PHOENIX_LENS_*</code> and <code class="inline">BASIC_AUTH_*</code>)</td></tr><tr><td style="text-align: left;"><code class="inline">SMTP_HOST</code> + <code class="inline">SMTP_FROM</code></td><td style="text-align: left;"></td><td style="text-align: left;"></td><td style="text-align: left;">Enable email verification and email 2FA</td></tr><tr><td style="text-align: left;"><code class="inline">SMTP_PORT</code></td><td style="text-align: left;"></td><td style="text-align: left;"><code class="inline">587</code></td><td style="text-align: left;"></td></tr><tr><td style="text-align: left;"><code class="inline">SMTP_USERNAME</code> / <code class="inline">SMTP_PASSWORD</code></td><td style="text-align: left;"></td><td style="text-align: left;"></td><td style="text-align: left;"></td></tr><tr><td style="text-align: left;"><code class="inline">SMTP_TLS</code></td><td style="text-align: left;"></td><td style="text-align: left;"><code class="inline">true</code></td><td style="text-align: left;"></td></tr><tr><td style="text-align: left;"><code class="inline">POSTGRES_SSL</code></td><td style="text-align: left;"></td><td style="text-align: left;"><code class="inline">false</code></td><td style="text-align: left;"><code class="inline">true</code> to require SSL to Postgres</td></tr><tr><td style="text-align: left;"><code class="inline">POOL_SIZE</code></td><td style="text-align: left;"></td><td style="text-align: left;"><code class="inline">5</code></td><td style="text-align: left;">Ecto pool</td></tr><tr><td style="text-align: left;"><code class="inline">LENS_SHARED_DIR</code></td><td style="text-align: left;">Compose</td><td style="text-align: left;"><code class="inline">./data</code></td><td style="text-align: left;">Host folder bind-mounted to <code class="inline">/data</code></td></tr><tr><td style="text-align: left;"><code class="inline">LENS_DATA_DIR</code></td><td style="text-align: left;"></td><td style="text-align: left;"><code class="inline">/data</code></td><td style="text-align: left;">Path inside the container (informational)</td></tr></tbody></table><p><code class="inline">PHOENIX_LENS_DATABASE_URL</code> is an alias for <code class="inline">DATABASE_URL</code>. <code class="inline">PGHOST</code> / <code class="inline">PGUSER</code> / <code class="inline">PGPASSWORD</code> / <code class="inline">PGDATABASE</code> / <code class="inline">PGPORT</code> also work.</p><h2 id="first-boot" class="section-heading"><a href="#first-boot" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">First boot</span></h2><ol><li>Lens creates its metadata tables on the configured database (<code class="inline">phoenix_lens_*</code>).</li><li><code class="inline">/lens/setup</code> asks for the <strong>operator</strong> username and password (min 10 characters).</li><li>If SMTP env vars are set, it also asks for an email, sends a 6-digit code, and stores the verified address. Later sign-ins send a new code (email 2FA).</li><li>If HTTP basic env vars are set, the browser asks for that user/password <em>before</em> the operator login.</li></ol><p>This operator login exists only in standalone mode. When you mount Lens in a Phoenix app, keep using the host pipeline.</p><p>To reset the operator, delete the row:</p><pre><code class="sql">DELETE FROM phoenix_lens_operators;</code></pre><p>Then reopen <code class="inline">/lens/setup</code>. <code class="inline">PhoenixLens.Auth.reset!()</code> still clears TOTP/passkeys only.</p><h2 id="build-and-publish" class="section-heading"><a href="#build-and-publish" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Build and publish</span></h2><p>Tag the image with the Lens version from <code class="inline">mix.exs</code> (<code class="inline">@version</code>) and push both that tag and <code class="inline">latest</code> to Docker Hub:</p><pre><code class="makeup sh" translate="no"><span class="">VERSION=$(awk -F &#39;&quot;&#39; &#39;/@version /{print $2; exit}&#39; mix.exs)
+</span><span class="">
+</span><span class="">docker build -t oivoodoo/phoenix_lens:$VERSION -t oivoodoo/phoenix_lens:latest .
+</span><span class="">docker login
+</span><span class="">docker push oivoodoo/phoenix_lens:$VERSION
+</span><span class="">docker push oivoodoo/phoenix_lens:latest
+</span></code></pre><p>GitHub Actions (<code class="inline">.github/workflows/docker.yml</code>) builds on <code class="inline">main</code> and version tags.</p><p>Pushing from CI needs a <strong>Docker Hub personal access token</strong> with <strong>Read &amp; Write</strong> (or Read, Write, Delete). An account password or a read-only token fails with <code class="inline">401 Unauthorized: access token has insufficient scopes</code>.</p><ol><li><a rel="nofollow" href="https://hub.docker.com">hub.docker.com</a> → Account Settings → Personal access tokens → Generate</li><li>Access permissions: <strong>Read &amp; Write</strong></li><li>GitHub repo → Settings → Secrets and variables → Actions:<ul><li><code class="inline">DOCKERHUB_USERNAME</code> — Hub username (<code class="inline">oivoodoo</code>)</li><li><code class="inline">DOCKERHUB_TOKEN</code> — the access token, not the account password</li></ul></li></ol><p>Then re-run the failed Docker workflow.</p><p>Health check: <code class="inline">GET /health</code> returns <code class="inline">200 ok</code> when Postgres answers.</p><h2 id="macos-desktop-electron" class="section-heading"><a href="#macos-desktop-electron" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">macOS desktop (Electron)</span></h2><p>Yes — you can wrap the same standalone release in Electron as a Mac <code class="inline">.app</code>. Electron is only a window: it starts the Mix release as a child process, waits for <code class="inline">GET /health</code>, and loads <code class="inline">http://127.0.0.1:$PORT/lens</code>.</p><p>That is a <strong>separate</strong> packaging job from Docker. Constraints:</p><table><thead><tr><th style="text-align: left;">Piece</th><th style="text-align: left;">Reality</th></tr></thead><tbody><tr><td style="text-align: left;">Elixir</td><td style="text-align: left;">Build a <strong>macOS</strong> Mix release (<code class="inline">MIX_ENV=prod mix release</code>) on a Mac. DuckDB’s NIF is platform-specific; you cannot reuse the Linux Docker image inside Electron.</td></tr><tr><td style="text-align: left;">Postgres</td><td style="text-align: left;">Still required for questions, operator login, and audit. Ship Postgres.app / a local Postgres, or point <code class="inline">DATABASE_URL</code> at an existing server. Embedding Postgres inside the <code class="inline">.app</code> is a different project.</td></tr><tr><td style="text-align: left;">Distribution</td><td style="text-align: left;"><code class="inline">electron-builder</code> can make a <code class="inline">.dmg</code>. Notarization and Apple Developer signing are required for other people’s Macs. The App Store is a poor fit (unsigned ERTS helper, local HTTP server).</td></tr><tr><td style="text-align: left;">Lighter option</td><td style="text-align: left;">Skip Electron and open the browser after <a href="Mix.Tasks.PhoenixLens.Server.html"><code class="inline">mix phoenix_lens.server</code></a> / Docker. Same app, no Chromium bundle (~150MB+).</td></tr></tbody></table><p>A typical Electron main process:</p><ol><li><code class="inline">spawn</code> <code class="inline">rel/phoenix_lens/bin/server</code> with <code class="inline">PORT</code>, <code class="inline">POSTGRES_*</code> / <code class="inline">DATABASE_URL</code>, <code class="inline">PHX_HOST=127.0.0.1</code></li><li>Poll <code class="inline">http://127.0.0.1:$PORT/health</code> until <code class="inline">200</code></li><li><code class="inline">BrowserWindow</code> → <code class="inline">http://127.0.0.1:$PORT/lens</code></li><li>On quit, SIGTERM the release</li></ol><p>Say if you want that wrapper scaffolded in-repo (<code class="inline">desktop/</code> + <code class="inline">electron-builder</code> for <code class="inline">darwin-arm64</code>).</p>
+
+</div>
+
+<div class="bottom-actions" id="bottom-actions">
+  <div class="bottom-actions-item">
+
+      <a href="permissions.html" class="bottom-actions-button" rel="prev">
+        <span class="subheader">
+          ← Previous Page
+        </span>
+        <span class="title">
+Permissions
+        </span>
+      </a>
+
+  </div>
+  <div class="bottom-actions-item">
+
+      <a href="001-in-process-not-a-metabase-clone.html" class="bottom-actions-button" rel="next">
+        <span class="subheader">
+          Next Page →
+        </span>
+        <span class="title">
+ADR-001: In-process PgHero-shaped library, not a Metabase clone
+        </span>
+      </a>
+
+  </div>
+</div>
+    <footer class="footer">
+
+        <p>
+
+            <span class="line">
+              <a href="https://hex.pm/packages/phoenix_lens/0.1.7">Hex Package</a>
+
+              <a href="https://preview.hex.pm/preview/phoenix_lens/0.1.7">Hex Preview</a>
+
+                (<a href="https://preview.hex.pm/preview/phoenix_lens/0.1.7/show/docs/Docker.md">current file</a>)
+
+            </span>
+
+          <span class="line">
+            <button class="a-main footer-button display-quick-switch" title="Go to package docs">
+              Go to package docs
+            </button>
+
+              <a href="llms.txt" target="_blank">
+                View llms.txt
+              </a>
+
+
+              <a href="phoenix_lens.epub">
+                Download ePub version
+              </a>
+
+          </span>
+        </p>
+
+        <p class="built-using">
+          Built using
+          <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.40.4) for the
+
+            <a href="https://elixir-lang.org" title="Elixir" target="_blank" translate="no">Elixir programming language</a>
+
+        </p>
+
+
+    </footer>
+  </div>
+</main>
+</div>
+
+  </body>
+</html>
