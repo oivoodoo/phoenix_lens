@@ -6,7 +6,7 @@ It is not Metabase. There is no sidecar JVM and no god-mode warehouse user. Quer
 
 This page is a tour of the product as it looks in the dummy app (`dummy/` on [http://localhost:4000/lens](http://localhost:4000/lens)), plus how queries are designed for **PostgreSQL** (default) and **DuckDB** (optional). Agents can drive the same notebook over **MCP** at `/lens/mcp`.
 
-Install and auth: [Phoenix.md](Phoenix.md). MCP server: [MCP.md](MCP.md). Threat model: [Policy.md](Policy.md). Host pipeline as permissions: [Permissions.md](Permissions.md).
+Install and auth: [Phoenix.md](Phoenix.md). Standalone Docker: [Docker.md](Docker.md). MCP server: [MCP.md](MCP.md). Threat model: [Policy.md](Policy.md). Host pipeline as permissions: [Permissions.md](Permissions.md).
 
 This library is **not** HIPAA or GDPR certified. You are the operator.
 

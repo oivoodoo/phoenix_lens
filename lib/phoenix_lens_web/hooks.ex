@@ -7,19 +7,35 @@ defmodule PhoenixLensWeb.Hooks do
   def on_mount(:default, _params, session, socket) do
     prefix = session["lens_prefix"] || "/lens"
     unlocked? = session["lens_unlocked"] == true or session[:lens_unlocked] == true
+    operator = session["lens_operator"]
+    gate? = socket.view in [PhoenixLensWeb.SetupLive, PhoenixLensWeb.LoginLive]
 
     socket =
       socket
       |> assign(:lens_prefix, prefix)
       |> assign(:lens_actor, session["lens_actor"])
       |> assign(:lens_databases, session["lens_databases"] || [])
+      |> assign(:lens_standalone, session["lens_standalone"] == true)
+      |> assign(:lens_operator, operator)
       |> assign(:page, :home)
       |> assign(:page_title, "Lens")
 
-    if PhoenixLens.Auth.required?() and not unlocked? and socket.view != PhoenixLensWeb.UnlockLive do
-      {:halt, redirect(socket, to: prefix <> "/unlock")}
-    else
-      {:cont, socket}
+    cond do
+      gate? ->
+        {:cont, socket}
+
+      PhoenixLens.Operator.required?() and is_nil(operator) and
+          not PhoenixLens.Operator.configured?() ->
+        {:halt, redirect(socket, to: prefix <> "/setup")}
+
+      PhoenixLens.Operator.required?() and is_nil(operator) ->
+        {:halt, redirect(socket, to: prefix <> "/login")}
+
+      PhoenixLens.Auth.required?() and not unlocked? and socket.view != PhoenixLensWeb.UnlockLive ->
+        {:halt, redirect(socket, to: prefix <> "/unlock")}
+
+      true ->
+        {:cont, socket}
     end
   end
 

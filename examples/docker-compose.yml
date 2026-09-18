@@ -1,0 +1,54 @@
+# Copy-paste example: published image + Postgres + a host shared folder.
+#
+#   mkdir -p data
+#   docker compose -f examples/docker-compose.yml up
+#   open http://localhost:8080/lens
+#
+# Put files you want to query with DuckDB in ./data, then in
+# Settings → Sources attach them as /data/yourfile.csv (or .parquet, .json,
+# .sqlite, .duckdb). Override the host path with LENS_SHARED_DIR.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: lens
+      POSTGRES_PASSWORD: lens
+      POSTGRES_DB: lens
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lens -d lens"]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - lens_pg:/var/lib/postgresql/data
+
+  lens:
+    image: oivoodoo/phoenix_lens:latest
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      PORT: "8080"
+      PHX_HOST: localhost
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: lens
+      POSTGRES_PASSWORD: lens
+      POSTGRES_DB: lens
+      LENS_DATA_DIR: /data
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:-}
+      HTTP_BASIC_USERNAME: ${HTTP_BASIC_USERNAME:-}
+      HTTP_BASIC_PASSWORD: ${HTTP_BASIC_PASSWORD:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      SMTP_TLS: ${SMTP_TLS:-true}
+    volumes:
+      - ${LENS_SHARED_DIR:-./data}:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  lens_pg:

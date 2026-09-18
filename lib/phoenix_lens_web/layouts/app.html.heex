@@ -1,4 +1,4 @@
-<div class={["lens-shell", @page == :unlock && "is-locked"]}>
+<div class={["lens-shell", @page in [:unlock, :setup, :login] && "is-locked"]}>
   <header class="lens-topbar">
     <a class="lens-logo" href={"#{@lens_prefix}"} aria-label="Lens home">
       <span class="lens-mark" aria-hidden="true"></span>
@@ -6,7 +6,7 @@
     </a>
 
     <form
-      :if={@page != :unlock}
+      :if={@page not in [:unlock, :setup, :login]}
       class="lens-search"
       action={"#{@lens_prefix}/questions"}
       method="get"
@@ -15,7 +15,7 @@
       <input type="search" name="q" placeholder="Search…" aria-label="Search questions" />
     </form>
 
-    <nav :if={@page != :unlock} class="lens-top-links" aria-label="Primary">
+    <nav :if={@page not in [:unlock, :setup, :login]} class="lens-top-links" aria-label="Primary">
       <a href={"#{@lens_prefix}/dashboards"} class={active_class(@page, :dashboards)}>Dashboards</a>
       <a href={"#{@lens_prefix}/questions"} class={active_class(@page, :questions)}>Questions</a>
       <a href={"#{@lens_prefix}/catalog"} class={active_class(@page, :catalog)}>Data</a>
@@ -23,9 +23,26 @@
       <a href={"#{@lens_prefix}/settings"} class={active_class(@page, :settings)}>Settings</a>
     </nav>
 
-    <a :if={@page != :unlock} class="lens-ask-btn" href={"#{@lens_prefix}/ask"}>
+    <a
+      :if={@page not in [:unlock, :setup, :login]}
+      class="lens-ask-btn"
+      href={"#{@lens_prefix}/ask"}
+    >
       <span aria-hidden="true">✦</span> Ask a question
     </a>
+
+    <form
+      :if={
+        @page not in [:unlock, :setup, :login] and assigns[:lens_standalone] and
+          assigns[:lens_operator]
+      }
+      class="lens-sign-out"
+      action={"#{@lens_prefix}/logout"}
+      method="post"
+    >
+      <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+      <button type="submit">Sign out {assigns[:lens_operator]}</button>
+    </form>
   </header>
 
   <main class="lens-main">

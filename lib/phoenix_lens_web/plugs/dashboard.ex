@@ -13,15 +13,19 @@ defmodule PhoenixLensWeb.Plugs.Dashboard do
       conn
       |> assign(:lens_mount_path, mount_path)
       |> assign(:lens_prefix, prefix_from_conn(conn, mount_path))
-      |> assign(:lens_actor, actor(conn, config))
       |> assign(:lens_databases, Map.values(config.databases) |> Enum.sort_by(& &1[:id]))
+      |> assign(:lens_standalone, PhoenixLens.Standalone.enabled?())
 
     if skip_csrf?(conn) do
-      Plug.Conn.put_private(conn, :plug_skip_csrf_protection, true)
+      conn
+      |> assign(:lens_actor, actor(conn, config))
+      |> Plug.Conn.put_private(:plug_skip_csrf_protection, true)
     else
       conn
       |> maybe_basic_auth(opts, config)
       |> maybe_halt()
+      |> maybe_operator(opts)
+      |> assign_actor(config)
       |> maybe_lock()
     end
   end
@@ -30,6 +34,10 @@ defmodule PhoenixLensWeb.Plugs.Dashboard do
     %{
       "lens_prefix" => conn.assigns[:lens_prefix],
       "lens_actor" => conn.assigns[:lens_actor],
+      "lens_standalone" => conn.assigns[:lens_standalone] == true,
+      "lens_unlocked" => Plug.Conn.get_session(conn, :lens_unlocked) == true,
+      "lens_operator_id" => Plug.Conn.get_session(conn, :lens_operator_id),
+      "lens_operator" => Plug.Conn.get_session(conn, :lens_operator),
       "lens_databases" =>
         Enum.map(conn.assigns[:lens_databases] || [], fn db ->
           %{id: db[:id], name: db[:name]}
@@ -59,8 +67,14 @@ defmodule PhoenixLensWeb.Plugs.Dashboard do
     end
   end
 
+  defp assign_actor(%{halted: true} = conn, _config), do: conn
+
+  defp assign_actor(conn, config) do
+    assign(conn, :lens_actor, actor(conn, config))
+  end
+
   defp actor(conn, config) do
-    conn.assigns[config.actor_assign]
+    conn.assigns[config.actor_assign] || conn.assigns[:lens_actor]
   end
 
   defp skip_csrf?(conn), do: "assets" in conn.path_info or "mcp" in conn.path_info
@@ -90,6 +104,32 @@ defmodule PhoenixLensWeb.Plugs.Dashboard do
 
   defp maybe_halt(conn), do: conn
 
+  defp maybe_operator(%{halted: true} = conn, _opts), do: conn
+
+  defp maybe_operator(conn, opts) do
+    cond do
+      opts[:skip_operator] ->
+        conn
+
+      not PhoenixLens.Operator.required?() ->
+        conn
+
+      skip_operator?(conn) ->
+        conn
+
+      operator = Plug.Conn.get_session(conn, :lens_operator) ->
+        conn
+        |> assign(:current_user, "operator:#{operator}")
+        |> assign(:lens_operator, operator)
+
+      PhoenixLens.Operator.configured?() ->
+        redirect_gate(conn, "/login")
+
+      true ->
+        redirect_gate(conn, "/setup")
+    end
+  end
+
   defp maybe_lock(%{halted: true} = conn), do: conn
 
   defp maybe_lock(conn) do
@@ -114,7 +154,20 @@ defmodule PhoenixLensWeb.Plugs.Dashboard do
   end
 
   defp skip_lock?(conn) do
-    skip_csrf?(conn) or "unlock" in conn.path_info
+    skip_csrf?(conn) or "unlock" in conn.path_info or skip_operator?(conn)
+  end
+
+  defp skip_operator?(conn) do
+    Enum.any?(conn.path_info, &(&1 in ["setup", "login", "session", "logout"]))
+  end
+
+  defp redirect_gate(conn, rest) do
+    prefix = conn.assigns[:lens_prefix] || "/lens"
+
+    conn
+    |> put_resp_header("location", prefix <> rest)
+    |> send_resp(302, "")
+    |> halt()
   end
 
   defp find_subsequence(_list, []), do: 0

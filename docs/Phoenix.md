@@ -66,6 +66,8 @@ config :phoenix_lens,
 
 **Do not expose this dashboard on the public internet without auth.**
 
+Standalone / Docker also reads `HTTP_BASIC_USERNAME` / `HTTP_BASIC_PASSWORD` (and `BASIC_AUTH_*`). The first visit creates an operator login. SMTP env vars add email verification and 2FA. See [Docker.md](Docker.md).
+
 **Settings → Security** can add an extra UI lock: TOTP from an authenticator app, and/or passkeys. When either is enabled, `/lens` redirects to `/lens/unlock` until the session is unlocked. MCP requests are not gated by this lock. It is not a replacement for the host pipeline.
 
 If you lock yourself out:

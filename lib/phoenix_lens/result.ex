@@ -80,7 +80,10 @@ defmodule PhoenixLens.Result do
     end
   end
 
-  defp format_uuid(<<a::binary-size(4), b::binary-size(2), c::binary-size(2), d::binary-size(2), e::binary-size(6)>>) do
+  defp format_uuid(
+         <<a::binary-size(4), b::binary-size(2), c::binary-size(2), d::binary-size(2),
+           e::binary-size(6)>>
+       ) do
     [a, b, c, d, e]
     |> Enum.map_join("-", &Base.encode16(&1, case: :lower))
   end

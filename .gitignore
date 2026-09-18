@@ -12,3 +12,7 @@ dummy/deps/
 dummy/.elixir_ls/
 .elixir_ls/
 .DS_Store
+/data/*
+!/data/.gitkeep
+!/data/README.md
+rel/

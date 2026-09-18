@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Standalone Docker image (`oivoodoo/phoenix_lens`): Mix release, Postgres env vars, first-boot operator login, optional SMTP email 2FA, optional HTTP basic auth, and `PORT`.
+- Docker Compose example bind-mounts `./data` to `/data` so CSV, Parquet, and other DuckDB sources on the host are visible in the container.
+
 ## 0.1.6
 
 - Serve `phoenix.js` and `phoenix_live_view.js` from the host app so Lens matches the LiveView version that compiled its templates. A vendored 1.2 client against a 1.0 host rendered catalog fields as `undefined`.

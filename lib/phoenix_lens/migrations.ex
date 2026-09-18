@@ -10,83 +10,88 @@ defmodule PhoenixLens.Migrations do
       end
   """
 
-  def up do
-    Ecto.Migration.execute("""
-    CREATE TABLE IF NOT EXISTS phoenix_lens_questions (
-      id bigserial PRIMARY KEY,
-      name text NOT NULL,
-      sql text NOT NULL,
-      viz text NOT NULL DEFAULT 'table',
-      database_id text NOT NULL DEFAULT 'primary',
-      inserted_at timestamp(6) NOT NULL DEFAULT now(),
-      updated_at timestamp(6) NOT NULL DEFAULT now()
-    )
-    """)
+  def statements do
+    [
+      """
+      CREATE TABLE IF NOT EXISTS phoenix_lens_questions (
+        id bigserial PRIMARY KEY,
+        name text NOT NULL,
+        sql text NOT NULL,
+        viz text NOT NULL DEFAULT 'table',
+        database_id text NOT NULL DEFAULT 'primary',
+        inserted_at timestamp(6) NOT NULL DEFAULT now(),
+        updated_at timestamp(6) NOT NULL DEFAULT now()
+      )
+      """,
+      """
+      CREATE TABLE IF NOT EXISTS phoenix_lens_dashboards (
+        id bigserial PRIMARY KEY,
+        name text NOT NULL,
+        inserted_at timestamp(6) NOT NULL DEFAULT now(),
+        updated_at timestamp(6) NOT NULL DEFAULT now()
+      )
+      """,
+      """
+      CREATE TABLE IF NOT EXISTS phoenix_lens_dashboard_cards (
+        id bigserial PRIMARY KEY,
+        dashboard_id bigint NOT NULL REFERENCES phoenix_lens_dashboards(id) ON DELETE CASCADE,
+        question_id bigint NOT NULL REFERENCES phoenix_lens_questions(id) ON DELETE CASCADE,
+        position int NOT NULL,
+        date_column text,
+        col int NOT NULL DEFAULT 0,
+        row int NOT NULL DEFAULT 0,
+        size_x int NOT NULL DEFAULT 6,
+        size_y int NOT NULL DEFAULT 5,
+        inserted_at timestamp(6) NOT NULL DEFAULT now()
+      )
+      """,
+      """
+      CREATE TABLE IF NOT EXISTS phoenix_lens_audit (
+        id bigserial PRIMARY KEY,
+        actor text NOT NULL,
+        database_id text NOT NULL,
+        question_id bigint,
+        sql_redacted text NOT NULL,
+        query_hash text NOT NULL,
+        row_count int,
+        duration_ms int,
+        masked_columns text[],
+        truncated boolean NOT NULL DEFAULT false,
+        error text,
+        inserted_at timestamp(6) NOT NULL DEFAULT now()
+      )
+      """,
+      "CREATE INDEX IF NOT EXISTS phoenix_lens_audit_inserted_at_idx ON phoenix_lens_audit (inserted_at DESC)",
+      "CREATE INDEX IF NOT EXISTS phoenix_lens_audit_query_hash_idx ON phoenix_lens_audit (query_hash)",
+      PhoenixLens.Dashboards.layout_alter_sql(),
+      PhoenixLens.Settings.settings_sql(),
+      PhoenixLens.Settings.settings_alter_sql(),
+      PhoenixLens.Settings.sources_sql(),
+      PhoenixLens.Protection.table_sql(),
+      PhoenixLens.Tokens.table_sql(),
+      PhoenixLens.Integrations.table_sql(),
+      PhoenixLens.Alerts.table_sql(),
+      PhoenixLens.Auth.auth_sql(),
+      PhoenixLens.Auth.passkeys_sql(),
+      PhoenixLens.Operator.table_sql()
+    ]
+  end
 
-    Ecto.Migration.execute("""
-    CREATE TABLE IF NOT EXISTS phoenix_lens_dashboards (
-      id bigserial PRIMARY KEY,
-      name text NOT NULL,
-      inserted_at timestamp(6) NOT NULL DEFAULT now(),
-      updated_at timestamp(6) NOT NULL DEFAULT now()
-    )
-    """)
-
-    Ecto.Migration.execute("""
-    CREATE TABLE IF NOT EXISTS phoenix_lens_dashboard_cards (
-      id bigserial PRIMARY KEY,
-      dashboard_id bigint NOT NULL REFERENCES phoenix_lens_dashboards(id) ON DELETE CASCADE,
-      question_id bigint NOT NULL REFERENCES phoenix_lens_questions(id) ON DELETE CASCADE,
-      position int NOT NULL,
-      date_column text,
-      col int NOT NULL DEFAULT 0,
-      row int NOT NULL DEFAULT 0,
-      size_x int NOT NULL DEFAULT 6,
-      size_y int NOT NULL DEFAULT 5,
-      inserted_at timestamp(6) NOT NULL DEFAULT now()
-    )
-    """)
-
-    Ecto.Migration.execute("""
-    CREATE TABLE IF NOT EXISTS phoenix_lens_audit (
-      id bigserial PRIMARY KEY,
-      actor text NOT NULL,
-      database_id text NOT NULL,
-      question_id bigint,
-      sql_redacted text NOT NULL,
-      query_hash text NOT NULL,
-      row_count int,
-      duration_ms int,
-      masked_columns text[],
-      truncated boolean NOT NULL DEFAULT false,
-      error text,
-      inserted_at timestamp(6) NOT NULL DEFAULT now()
-    )
-    """)
-
-    Ecto.Migration.execute(
-      "CREATE INDEX IF NOT EXISTS phoenix_lens_audit_inserted_at_idx ON phoenix_lens_audit (inserted_at DESC)"
-    )
-
-    Ecto.Migration.execute(
-      "CREATE INDEX IF NOT EXISTS phoenix_lens_audit_query_hash_idx ON phoenix_lens_audit (query_hash)"
-    )
-
-    Ecto.Migration.execute(PhoenixLens.Dashboards.layout_alter_sql())
-    Ecto.Migration.execute(PhoenixLens.Settings.settings_sql())
-    Ecto.Migration.execute(PhoenixLens.Settings.settings_alter_sql())
-    Ecto.Migration.execute(PhoenixLens.Settings.sources_sql())
-    Ecto.Migration.execute(PhoenixLens.Protection.table_sql())
-    Ecto.Migration.execute(PhoenixLens.Tokens.table_sql())
-    Ecto.Migration.execute(PhoenixLens.Integrations.table_sql())
-    Ecto.Migration.execute(PhoenixLens.Alerts.table_sql())
-    Ecto.Migration.execute(PhoenixLens.Auth.auth_sql())
-    Ecto.Migration.execute(PhoenixLens.Auth.passkeys_sql())
+  def ensure_all(repo) when not is_nil(repo) do
+    Enum.each(statements(), fn sql ->
+      repo.query!(sql, [])
+    end)
 
     :ok
   end
 
+  def up do
+    Enum.each(statements(), &Ecto.Migration.execute/1)
+    :ok
+  end
+
   def down do
+    Ecto.Migration.execute("DROP TABLE IF EXISTS phoenix_lens_operators")
     Ecto.Migration.execute("DROP TABLE IF EXISTS phoenix_lens_passkeys")
     Ecto.Migration.execute("DROP TABLE IF EXISTS phoenix_lens_auth")
     Ecto.Migration.execute("DROP TABLE IF EXISTS phoenix_lens_alerts")

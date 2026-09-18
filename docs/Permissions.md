@@ -1,6 +1,8 @@
 # Permissions
 
-Lens has no users table. The host Phoenix pipeline is the permission model, same as PgHero.
+Lens has no users table when you **mount** it. The host Phoenix pipeline is the permission model, same as PgHero.
+
+Standalone Docker is the exception: first boot creates one operator in `phoenix_lens_operators`, optional email 2FA if SMTP is configured, and optional HTTP basic from env. See [Docker.md](Docker.md). Host mounts never consult that table.
 
 ```elixir
 pipeline :require_admin do

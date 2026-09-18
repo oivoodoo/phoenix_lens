@@ -4,6 +4,11 @@ defmodule Mix.Tasks.PhoenixLens.Server do
 
       DATABASE_URL=postgres://user:pass@localhost/dbname mix phoenix_lens.server
 
+  First boot opens `/lens/setup` to create the operator login. `PORT` sets the
+  HTTP port (default 8080). Optional `HTTP_BASIC_USERNAME` / `HTTP_BASIC_PASSWORD`
+  enable HTTP basic auth. Optional `SMTP_HOST` + `SMTP_FROM` send an email
+  verification code and use it as 2FA.
+
   Options:
 
       --port 8080

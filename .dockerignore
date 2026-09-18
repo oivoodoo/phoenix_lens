@@ -1,0 +1,13 @@
+_build
+deps
+doc
+dummy
+test
+.git
+.github
+.elixir_ls
+erl_crash.dump
+*.ez
+phoenix_lens-*.tar
+/tmp
+.DS_Store

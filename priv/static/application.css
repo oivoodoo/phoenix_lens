@@ -121,6 +121,21 @@ h2 { font-size: 16px; margin: 0; }
 }
 .lens-ask-btn:hover { background: var(--brand-dark); filter: none; }
 
+.lens-sign-out {
+  margin-left: auto;
+}
+.lens-sign-out button {
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.lens-sign-out button:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
 .lens-main {
   flex: 1;
   padding: 28px 32px 80px;

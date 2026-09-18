@@ -421,7 +421,7 @@ v0.1.0 is done when all of the following are true:
 - Result caching
 - Multi-engine (MySQL, BigQuery, Snowflake)
 - AI / NL-to-SQL
-- Docker image (nice-to-have after dummy works; PgHero has one — do not block 0.1.0)
+- Multi-user accounts inside the mounted library (standalone Docker has a single operator)
 - `strict:` reject-if-touches-PHI mode
 
 ## Open Questions

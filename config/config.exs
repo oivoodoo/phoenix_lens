@@ -7,6 +7,8 @@ config :wax_,
   rp_id: :auto
 
 config :phoenix_lens, :standalone, false
+config :phoenix_lens, ecto_repos: [PhoenixLens.Standalone.Repo]
+config :phoenix_lens, PhoenixLens.Standalone.Repo, pool_size: 2
 
 config :phoenix_lens, PhoenixLens.Standalone.Endpoint,
   adapter: Bandit.PhoenixAdapter,

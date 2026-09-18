@@ -20,7 +20,13 @@ defmodule PhoenixLens.MixProject do
       source_url: @source_url,
       homepage_url: @pages_url,
       docs: docs(),
-      aliases: aliases()
+      aliases: aliases(),
+      releases: [
+        phoenix_lens: [
+          include_executables_for: [:unix],
+          applications: [runtime_tools: :permanent]
+        ]
+      ]
     ]
   end
 
@@ -79,10 +85,12 @@ defmodule PhoenixLens.MixProject do
         "docs/Phoenix.md",
         "docs/Policy.md",
         "docs/Permissions.md",
+        "docs/Docker.md",
         "docs/decisions/001-in-process-not-a-metabase-clone.md",
         "docs/decisions/002-field-policy-on-every-sink.md",
         "docs/decisions/003-postgres-read-replica-timeout.md",
-        "docs/decisions/004-duckdb-engine.md"
+        "docs/decisions/004-duckdb-engine.md",
+        "docs/decisions/005-standalone-operator-login.md"
       ],
       groups_for_extras: [
         Guides: [
@@ -91,7 +99,8 @@ defmodule PhoenixLens.MixProject do
           "docs/Alerts.md",
           "docs/Phoenix.md",
           "docs/Policy.md",
-          "docs/Permissions.md"
+          "docs/Permissions.md",
+          "docs/Docker.md"
         ],
         Decisions: ~r{docs/decisions/}
       ],

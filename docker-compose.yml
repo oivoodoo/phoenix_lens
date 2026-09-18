@@ -1,0 +1,54 @@
+# Standalone Lens with Postgres and a host shared folder.
+#
+#   docker compose up --build
+#   open http://localhost:8080/lens
+#
+# Drop CSV / Parquet / JSON / SQLite / DuckDB files into ./data
+# and attach them in Settings as /data/<filename>.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: lens
+      POSTGRES_PASSWORD: lens
+      POSTGRES_DB: lens
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lens -d lens"]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - lens_pg:/var/lib/postgresql/data
+
+  lens:
+    image: oivoodoo/phoenix_lens:latest
+    build: .
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      PORT: "8080"
+      PHX_HOST: localhost
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: lens
+      POSTGRES_PASSWORD: lens
+      POSTGRES_DB: lens
+      LENS_DATA_DIR: /data
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:-}
+      HTTP_BASIC_USERNAME: ${HTTP_BASIC_USERNAME:-}
+      HTTP_BASIC_PASSWORD: ${HTTP_BASIC_PASSWORD:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      SMTP_TLS: ${SMTP_TLS:-true}
+    volumes:
+      # Host shared folder ↔ /data in the container (DuckDB extra sources).
+      - ${LENS_SHARED_DIR:-./data}:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  lens_pg:

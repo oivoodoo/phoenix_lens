@@ -12,8 +12,18 @@ defmodule PhoenixLens.Config do
       timeout_ms: int(app, :timeout_ms, env_int("PHOENIX_LENS_TIMEOUT_MS", 5_000)),
       max_rows: int(app, :max_rows, env_int("PHOENIX_LENS_MAX_ROWS", 10_000)),
       actor_assign: Map.get(app, :actor_assign, :current_user),
-      username: str(app, :username, System.get_env("PHOENIX_LENS_USERNAME")),
-      password: str(app, :password, System.get_env("PHOENIX_LENS_PASSWORD")),
+      username:
+        str(
+          app,
+          :username,
+          first_env(~w(PHOENIX_LENS_USERNAME HTTP_BASIC_USERNAME BASIC_AUTH_USERNAME))
+        ),
+      password:
+        str(
+          app,
+          :password,
+          first_env(~w(PHOENIX_LENS_PASSWORD HTTP_BASIC_PASSWORD BASIC_AUTH_PASSWORD))
+        ),
       metadata_repo: metadata_repo(app, databases)
     }
   end
@@ -246,5 +256,15 @@ defmodule PhoenixLens.Config do
       "" -> default
       value -> String.to_integer(value)
     end
+  end
+
+  defp first_env(keys) do
+    Enum.find_value(keys, fn key ->
+      case System.get_env(key) do
+        nil -> nil
+        "" -> nil
+        value -> value
+      end
+    end)
   end
 end

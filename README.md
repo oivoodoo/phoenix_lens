@@ -181,11 +181,25 @@ Threat model: [docs/Policy.md](docs/Policy.md).
 DATABASE_URL=postgres://user:pass@localhost/dbname mix phoenix_lens.server
 ```
 
-Then visit `http://localhost:8080/lens`.
+Then visit `http://localhost:8080/lens`. The first visit creates the operator login. `PORT` (default 8080), `HTTP_BASIC_USERNAME` / `HTTP_BASIC_PASSWORD`, and `SMTP_HOST` + `SMTP_FROM` (email 2FA) are optional.
+
+### Docker
+
+```sh
+docker run --rm -p 8080:8080 \
+  -e POSTGRES_HOST=host.docker.internal \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=app \
+  oivoodoo/phoenix_lens
+```
+
+Image: [`oivoodoo/phoenix_lens`](https://hub.docker.com/r/oivoodoo/phoenix_lens). Compose mounts `./data` into the container at `/data` for DuckDB files. Env vars, first boot, shared folder, and macOS/Electron notes: [docs/Docker.md](docs/Docker.md).
 
 ## Docs
 
 - [Guide](https://oivoodoo.github.io/phoenix_lens/guide.html) — features, query design, DuckDB vs PostgreSQL, screenshots ([source](docs/Guide.md))
+- [Docker](docs/Docker.md) — standalone image, Postgres env, first-boot login
 - [MCP](docs/MCP.md) — agent endpoint, project tokens
 - [Alerts](docs/Alerts.md) — email and webhook notifications
 - [HexDocs](https://hexdocs.pm/phoenix_lens)

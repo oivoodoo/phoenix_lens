@@ -282,9 +282,8 @@ defmodule PhoenixLens.Integrations do
 
   defp env_email do
     smtp = Application.get_env(:phoenix_lens, :smtp) || []
-
-    host = smtp[:host] || smtp["host"]
-    from = smtp[:from] || smtp["from"]
+    host = smtp_get(smtp, :host)
+    from = smtp_get(smtp, :from)
 
     if is_binary(host) and host != "" and is_binary(from) and from != "" do
       %{
@@ -295,15 +294,19 @@ defmodule PhoenixLens.Integrations do
         "error" => nil,
         "config" => %{
           "host" => host,
-          "port" => smtp[:port] || smtp["port"] || 587,
-          "tls" => smtp[:tls] || smtp["tls"] || true,
-          "username" => smtp[:username] || smtp["username"] || "",
-          "password" => smtp[:password] || smtp["password"] || "",
+          "port" => smtp_get(smtp, :port) || 587,
+          "tls" => smtp_get(smtp, :tls) || true,
+          "username" => smtp_get(smtp, :username) || "",
+          "password" => smtp_get(smtp, :password) || "",
           "from" => from
         }
       }
     end
   end
+
+  defp smtp_get(smtp, key) when is_list(smtp), do: Keyword.get(smtp, key)
+  defp smtp_get(smtp, key) when is_map(smtp), do: smtp[key] || smtp[Atom.to_string(key)]
+  defp smtp_get(_, _), do: nil
 
   defp decode(row) do
     cfg =
