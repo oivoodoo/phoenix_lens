@@ -3,7 +3,7 @@ defmodule PhoenixLens.Questions do
   Saved SQL questions in the host Repo.
   """
 
-  alias PhoenixLens.{Config, Error, Redactor}
+  alias PhoenixLens.{Config, Error}
 
   @viz ~w(table number bar line)
 
@@ -43,7 +43,6 @@ defmodule PhoenixLens.Questions do
     viz = if viz in @viz, do: viz, else: "table"
     database_id = to_string(attrs[:database_id] || attrs["database_id"] || "primary")
     id = attrs[:id] || attrs["id"]
-    sql = Redactor.sql(sql)
 
     repo = metadata_repo!()
 

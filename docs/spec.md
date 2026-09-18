@@ -11,7 +11,7 @@ Living spec. Idea one-pager: `docs/ideas/lens.md` (workspace root). ADRs: `docs/
 3. **Replacement.** v1 exists to uninstall a Metabase sidecar for *this* user, not to win a BI bake-off.
 4. **Default engine PostgreSQL** (Postgrex). Optional DuckDB engine attaches the host Repo read-only and extra sources (Postgres, SQLite, DuckDB files, Parquet, CSV, JSON) in one in-process engine. Host apps add `{:duckdbex, "~> 0.4"}`.
 5. **Auth.** None inside the library when mounted. Optional HTTP basic auth (PgHero pattern). Identity for audit: `conn.assigns[:current_user]` (configurable assign key); stringified; `"anonymous"` if missing.
-6. **Mask default.** Protected cells become the atom `:redacted`, rendered `[redacted]`. WHERE may reference protected columns. Stored SQL / audit viewer redact email- and phone-like literals.
+6. **Mask default.** Protected cells become the atom `:redacted`, rendered `[redacted]`. WHERE may reference protected columns. Saved questions keep SQL as written. The audit viewer redacts email- and phone-like literals.
 7. **Not certified.** README says designed for GDPR/HIPAA dashboard use (minimization, audit, no PHI in sinks). No “compliant” / “certified” claim.
 8. **Stack.** Elixir `~> 1.15`, Phoenix `~> 1.7`, LiveView `~> 0.20 or ~> 1.0`, Ecto SQL `~> 3.11`, Postgrex `~> 0.17`, Jason, Bandit for dummy/standalone. MIT license. Mirror PgHero’s dummy-app + `mix phoenix_lens.server` layout.
 9. **Persistence.** Questions, dashboards, and audit rows live in the **host** Repo via `PhoenixLens.Migrations`. Query *results* are never stored.
@@ -210,9 +210,10 @@ Apply (`PhoenixLens.Policy.apply/2`):
 4. Replace cell values with `:redacted`. Do not inspect cell contents to “detect PII” (no regex on values — that is a side channel and a performance trap).
 5. `meta.masked_columns` lists output names that were masked. `meta.truncated` if row cap hit.
 
-SQL literal redaction (`PhoenixLens.Redactor.sql/1`) for storage, logs, and the editor’s “saved” view:
+SQL literal redaction (`PhoenixLens.Redactor.sql/1`) for the **audit log** only (not saved questions):
 
 - Replace RFC-like emails and long digit runs (phones) inside quotes with `'[redacted]'`
+- Saved question SQL is stored and shown as written so it can be re-run
 - Do not attempt to be a full DLP product
 
 ### Query execution

@@ -18,7 +18,7 @@ A Hex library cannot be “HIPAA certified.” The operator is the covered entit
 2. **Enforcement:** one `PhoenixLens.Policy` function runs on every sink — LiveView grid, CSV, JSON, chart tooltips, embeds, logs, future alerts. There is no unmasked result type that UI code is allowed to hold.
 3. **Alias hole:** resolve origin columns via PostgreSQL `RowDescription` (table OID + attribute number → `pg_attribute.attname`). Mask if the origin name **or** the output alias is protected.
 4. **Expressions:** if a result column has no origin (computed), treat it as protected when the SELECT item’s SQL text contains a protected identifier. Known limitation: subquery/function smuggling. Document it; do not claim it is closed.
-5. **WHERE:** protected fields may appear in filters (support lookup). Literals that look like emails/phones in stored SQL and the audit viewer are redacted.
+5. **WHERE:** protected fields may appear in filters (support lookup). Saved questions keep SQL as written. Literals that look like emails/phones in the audit viewer are redacted. Result cells stay masked.
 6. **Default render:** the atom `:redacted` displayed as `[redacted]`. Not hashed, not dropped, in v1.
 7. **Never persist rowsets.** Persist questions and audit metadata only. Audit stores redacted SQL, query hash, actor, row count, duration — never cells.
 

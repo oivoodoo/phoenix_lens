@@ -80,8 +80,14 @@ Then reopen `/lens/setup`. `PhoenixLens.Auth.reset!()` still clears TOTP/passkey
 
 ## Build and publish
 
+Tag the image with the Lens version from `mix.exs` (`@version`) and push both that tag and `latest` to Docker Hub:
+
 ```sh
-docker build -t oivoodoo/phoenix_lens:latest .
+VERSION=$(awk -F '"' '/@version /{print $2; exit}' mix.exs)
+
+docker build -t oivoodoo/phoenix_lens:$VERSION -t oivoodoo/phoenix_lens:latest .
+docker login
+docker push oivoodoo/phoenix_lens:$VERSION
 docker push oivoodoo/phoenix_lens:latest
 ```
 

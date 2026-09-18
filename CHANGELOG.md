@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Keep email/phone literals in saved question SQL; mask protected columns in result cells only (audit log still redacts SQL literals).
 - Standalone Docker image (`oivoodoo/phoenix_lens`): Mix release, Postgres env vars, first-boot operator login, optional SMTP email 2FA, optional HTTP basic auth, and `PORT`.
 - Docker Compose example bind-mounts `./data` to `/data` so CSV, Parquet, and other DuckDB sources on the host are visible in the container.
 

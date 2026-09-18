@@ -25,7 +25,7 @@ A column is masked when:
 
 Masked cells are the atom `:redacted`, rendered `[redacted]`, including CSV, embeds, the audit viewer, **MCP tool results**, and **alert email/webhook payloads**.
 
-`WHERE email = ...` is allowed. Quoted email/phone literals are redacted in stored SQL and in the audit log.
+`WHERE email = ...` is allowed. Saved questions keep those literals so the query can be re-run. Quoted email/phone literals are redacted in the audit log. Result cells for protected columns are still `[redacted]`.
 
 ## Threat model (known limits)
 
