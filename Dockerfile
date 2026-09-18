@@ -38,9 +38,21 @@ COPY lib lib
 RUN mix compile
 
 COPY config/runtime.exs config/
-COPY rel rel
-RUN chmod +x rel/overlays/bin/server
-RUN mix release
+
+# Mix copies rel/overlays into the release (https://hexdocs.pm/mix/Mix.Release.html).
+# Generate the start script here so CI/CD does not need a committed rel/ tree.
+RUN mkdir -p rel/overlays/bin \
+  && printf '%s\n' \
+    '#!/bin/sh' \
+    'set -eu' \
+    'cd -P -- "$(dirname -- "$0")"' \
+    'PHX_SERVER=true' \
+    'PHOENIX_LENS_SERVER=true' \
+    'export PHX_SERVER PHOENIX_LENS_SERVER' \
+    'exec ./phoenix_lens start' \
+    > rel/overlays/bin/server \
+  && chmod +x rel/overlays/bin/server \
+  && mix release
 
 FROM ${RUNNER_IMAGE} AS final
 
