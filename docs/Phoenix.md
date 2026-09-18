@@ -7,7 +7,7 @@ Add PhoenixLens to `mix.exs`:
 ```elixir
 def deps do
   [
-    {:phoenix_lens, "~> 0.1.6"}
+    {:phoenix_lens, "~> 0.1.7"}
   ]
 end
 ```
