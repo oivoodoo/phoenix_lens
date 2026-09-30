@@ -34,13 +34,9 @@ defmodule PhoenixLens.Audit do
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
       """
 
-      case repo.query(sql, params, log: false) do
-        {:ok, _} ->
-          _ = purge_expired()
-          :ok
-
-        {:error, _} ->
-          :ok
+      case repo.query(sql, params, log: false, timeout: 5_000) do
+        {:ok, _} -> :ok
+        {:error, _} -> :ok
       end
     end
   rescue
@@ -48,7 +44,6 @@ defmodule PhoenixLens.Audit do
   end
 
   def page(page \\ 1, per_page \\ @default_per_page) do
-    _ = purge_expired()
     per_page = per_page |> to_int() |> max(1) |> min(100)
     total = count()
     pages = max(ceil(total / per_page), 1)
@@ -84,7 +79,8 @@ defmodule PhoenixLens.Audit do
              LIMIT $1 OFFSET $2
              """,
              [limit, offset],
-             log: false
+             log: false,
+             timeout: 5_000
            ) do
         {:ok, %{rows: rows, columns: columns}} ->
           Enum.map(rows, &row_to_map(columns, &1))
@@ -103,7 +99,7 @@ defmodule PhoenixLens.Audit do
     if is_nil(repo) do
       0
     else
-      case repo.query("SELECT count(*) FROM phoenix_lens_audit", [], log: false) do
+      case repo.query("SELECT count(*) FROM phoenix_lens_audit", [], log: false, timeout: 5_000) do
         {:ok, %{rows: [[n]]}} -> n
         _ -> 0
       end
@@ -112,26 +108,51 @@ defmodule PhoenixLens.Audit do
     _ -> 0
   end
 
+  @purge_batch 1_000
+
+  @doc """
+  Deletes at most #{@purge_batch} expired audit rows.
+
+  Called from the alert scheduler, not from a dashboard request. The checkout
+  uses a short `lock_timeout` and `statement_timeout` so a lock wait cannot
+  hold a pool connection for the Repo's full timeout.
+  """
   def purge_expired do
     days = Settings.audit_retention_days()
     repo = Config.get().metadata_repo
 
     cond do
-      is_nil(repo) ->
-        :ok
-
-      days in [nil, 0] ->
-        :ok
-
-      true ->
-        repo.query(
-          "DELETE FROM phoenix_lens_audit WHERE inserted_at < NOW() - ($1 * INTERVAL '1 day')",
-          [days],
-          log: false
-        )
-
-        :ok
+      is_nil(repo) -> :ok
+      days in [nil, 0] -> :ok
+      true -> purge_batch(repo, days)
     end
+  end
+
+  @doc false
+  def purge_statement do
+    """
+    DELETE FROM phoenix_lens_audit
+    WHERE id IN (
+      SELECT id
+      FROM phoenix_lens_audit
+      WHERE inserted_at < NOW() - ($1 * INTERVAL '1 day')
+      ORDER BY inserted_at
+      LIMIT #{@purge_batch}
+    )
+    """
+  end
+
+  defp purge_batch(repo, days) do
+    repo.transaction(
+      fn ->
+        repo.query!("SET LOCAL lock_timeout = '2s'", [], log: false, timeout: 3_000)
+        repo.query!("SET LOCAL statement_timeout = '4s'", [], log: false, timeout: 3_000)
+        repo.query!(purge_statement(), [days], log: false, timeout: 5_000)
+      end,
+      timeout: 8_000
+    )
+
+    :ok
   rescue
     _ -> :ok
   end

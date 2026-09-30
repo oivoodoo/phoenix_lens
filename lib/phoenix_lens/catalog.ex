@@ -3,6 +3,10 @@ defmodule PhoenixLens.Catalog do
 
   alias PhoenixLens.{Config, Policy, Protection}
 
+  @modules_cache {__MODULE__, :schema_modules}
+  @tables_cache {__MODULE__, :postgres_tables}
+  @tables_ttl_ms 60_000
+
   def schemas do
     config = Config.get()
     protected = Policy.protected_set(config)
@@ -61,22 +65,44 @@ defmodule PhoenixLens.Catalog do
   defp postgres_tables do
     repo = Config.get().metadata_repo
 
-    if is_nil(repo) do
-      []
-    else
-      case repo.query(
-             """
-             SELECT table_name, column_name, data_type
-             FROM information_schema.columns
-             WHERE table_schema = 'public'
-               AND table_name NOT LIKE 'phoenix_lens_%'
-               AND table_name <> 'schema_migrations'
-             ORDER BY table_name, ordinal_position
-             """,
-             [],
-             log: false
-           ) do
-        {:ok, %{rows: rows}} ->
+    cond do
+      is_nil(repo) ->
+        []
+
+      cached = cached_tables(repo) ->
+        cached
+
+      true ->
+        load_postgres_tables(repo)
+    end
+  end
+
+  defp cached_tables(repo) do
+    case :persistent_term.get({@tables_cache, repo}, :miss) do
+      {at, tables} when is_integer(at) and is_list(tables) ->
+        if System.monotonic_time(:millisecond) - at < @tables_ttl_ms, do: tables
+
+      _ ->
+        nil
+    end
+  end
+
+  defp load_postgres_tables(repo) do
+    case repo.query(
+           """
+           SELECT table_name, column_name, data_type
+           FROM information_schema.columns
+           WHERE table_schema = 'public'
+             AND table_name NOT LIKE 'phoenix_lens_%'
+             AND table_name <> 'schema_migrations'
+           ORDER BY table_name, ordinal_position
+           """,
+           [],
+           log: false,
+           timeout: 5_000
+         ) do
+      {:ok, %{rows: rows}} ->
+        tables =
           rows
           |> Enum.group_by(fn [table, _, _] -> table end)
           |> Enum.map(fn {table, cols} ->
@@ -89,9 +115,15 @@ defmodule PhoenixLens.Catalog do
             }
           end)
 
-        _ ->
-          []
-      end
+        :persistent_term.put(
+          {@tables_cache, repo},
+          {System.monotonic_time(:millisecond), tables}
+        )
+
+        tables
+
+      _ ->
+        []
     end
   rescue
     _ -> []
@@ -163,20 +195,44 @@ defmodule PhoenixLens.Catalog do
   end
 
   defp schema_modules(repo) do
-    app = repo_otp_app(repo)
+    case :persistent_term.get({@modules_cache, repo}, :miss) do
+      :miss ->
+        case load_schema_modules(repo) do
+          {:ok, modules} ->
+            :persistent_term.put({@modules_cache, repo}, modules)
+            modules
 
-    modules =
-      case app && :application.get_key(app, :modules) do
-        {:ok, list} -> list
-        _ -> []
-      end
+          :error ->
+            []
+        end
 
-    Enum.filter(modules, fn mod ->
-      Code.ensure_loaded?(mod) and function_exported?(mod, :__schema__, 1) and
-        is_binary(mod.__schema__(:source))
-    end)
+      modules ->
+        modules
+    end
+  end
+
+  defp load_schema_modules(repo) do
+    case repo_otp_app(repo) do
+      nil ->
+        :error
+
+      app ->
+        modules =
+          case :application.get_key(app, :modules) do
+            {:ok, list} -> list
+            _ -> []
+          end
+
+        loaded =
+          Enum.filter(modules, fn mod ->
+            Code.ensure_loaded?(mod) and function_exported?(mod, :__schema__, 1) and
+              is_binary(mod.__schema__(:source))
+          end)
+
+        {:ok, loaded}
+    end
   rescue
-    _ -> []
+    _ -> :error
   end
 
   defp repo_otp_app(repo) when is_atom(repo) do

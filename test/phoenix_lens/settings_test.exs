@@ -1,5 +1,5 @@
 defmodule PhoenixLens.SettingsTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias PhoenixLens.Settings
 
@@ -64,5 +64,21 @@ defmodule PhoenixLens.SettingsTest do
 
   test "audit_retention_days defaults to 90" do
     assert Settings.audit_retention_days() == 90
+  end
+
+  test "sources uses the cached list" do
+    key = {Settings, :sources}
+    previous = :persistent_term.get(key, :miss)
+    :persistent_term.put(key, [%{"alias" => "warehouse"}])
+
+    on_exit(fn ->
+      if previous == :miss do
+        :persistent_term.erase(key)
+      else
+        :persistent_term.put(key, previous)
+      end
+    end)
+
+    assert Settings.sources() == [%{"alias" => "warehouse"}]
   end
 end

@@ -35,17 +35,7 @@ defmodule PhoenixLens.Auth do
   end
 
   def ensure_tables do
-    case repo() do
-      nil ->
-        :ok
-
-      repo ->
-        repo.query!(auth_sql(), [], log: false)
-        repo.query!(passkeys_sql(), [], log: false)
-        :ok
-    end
-  rescue
-    _ -> :ok
+    PhoenixLens.Migrations.ensure_once(repo())
   end
 
   def required? do

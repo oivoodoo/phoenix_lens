@@ -51,6 +51,7 @@ defmodule PhoenixLens.Query do
   defp execute(db, sql, config) do
     timeout = config.timeout_ms
     max_rows = config.max_rows
+    PhoenixLens.Migrations.ensure_once(config.metadata_repo)
 
     if Settings.engine() == :duckdb do
       execute_duckdb(sql, timeout, max_rows)

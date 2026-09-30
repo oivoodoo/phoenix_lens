@@ -62,27 +62,57 @@ defmodule PhoenixLens.Policy do
     end)
   end
 
+  @doc """
+  Ecto `redact: true` field names for `repo`.
+
+  The module scan is cached for the life of the node. Dashboard cards call
+  this once per question, and a host app can have hundreds of schema modules.
+  """
   def schema_redact_fields(repo) when is_atom(repo) do
-    app = repo_otp_app(repo)
+    case :persistent_term.get(schema_redact_key(repo), :miss) do
+      :miss ->
+        case load_schema_redact_fields(repo) do
+          {:ok, fields} ->
+            :persistent_term.put(schema_redact_key(repo), fields)
+            fields
 
-    modules =
-      case app && :application.get_key(app, :modules) do
-        {:ok, list} -> list
-        _ -> []
-      end
+          :error ->
+            []
+        end
 
-    Enum.flat_map(modules, fn mod ->
-      if Code.ensure_loaded?(mod) and function_exported?(mod, :__schema__, 1) do
-        redact_field_names(mod)
-      else
-        []
-      end
-    end)
-  rescue
-    _ -> []
+      fields ->
+        fields
+    end
   end
 
   def schema_redact_fields(_), do: []
+
+  defp load_schema_redact_fields(repo) do
+    case repo_otp_app(repo) do
+      nil ->
+        :error
+
+      app ->
+        modules =
+          case :application.get_key(app, :modules) do
+            {:ok, list} -> list
+            _ -> []
+          end
+
+        fields =
+          Enum.flat_map(modules, fn mod ->
+            if Code.ensure_loaded?(mod) and function_exported?(mod, :__schema__, 1) do
+              redact_field_names(mod)
+            else
+              []
+            end
+          end)
+
+        {:ok, fields}
+    end
+  rescue
+    _ -> :error
+  end
 
   defp redact_field_names(mod) do
     fields = mod.__schema__(:fields)
@@ -99,6 +129,8 @@ defmodule PhoenixLens.Policy do
       # `__schema__(:redact_fields)` exists since Ecto 3.5.
       []
   end
+
+  defp schema_redact_key(repo), do: {__MODULE__, :schema_redact, repo}
 
   defp repo_otp_app(repo) do
     repo.config()[:otp_app]

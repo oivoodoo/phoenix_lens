@@ -10,7 +10,15 @@ defmodule PhoenixLensWeb.DashboardLive do
       {:ok, dashboard} ->
         from = params["from"]
         to = params["to"]
-        cards = Enum.map(dashboard["cards"], &run_card(&1, from, to, socket))
+
+        # The disconnected render does not run card SQL. LiveView mounts twice,
+        # and running every question on both would hold a pool connection twice.
+        cards =
+          if connected?(socket) do
+            Enum.map(dashboard["cards"], &run_card(&1, from, to, socket))
+          else
+            []
+          end
 
         {:ok,
          socket
@@ -19,6 +27,7 @@ defmodule PhoenixLensWeb.DashboardLive do
          |> assign(:dashboard, dashboard)
          |> assign(:name, dashboard["name"])
          |> assign(:cards, cards)
+         |> assign(:cards_loading, not connected?(socket))
          |> assign(:from, from)
          |> assign(:to, to)
          |> assign(:editing, false)
@@ -244,8 +253,12 @@ defmodule PhoenixLensWeb.DashboardLive do
         </div>
       </form>
 
-      <%= if @cards == [] do %>
-        <p class="lens-empty">No cards yet. Save a question and pin it here.</p>
+      <%= if @cards_loading do %>
+        <p class="lens-empty">Loading cards…</p>
+      <% else %>
+        <%= if @cards == [] do %>
+          <p class="lens-empty">No cards yet. Save a question and pin it here.</p>
+        <% end %>
       <% end %>
 
       <div

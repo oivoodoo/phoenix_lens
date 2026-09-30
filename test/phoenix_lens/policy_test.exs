@@ -80,4 +80,20 @@ defmodule PhoenixLens.PolicyTest do
     assert MapSet.member?(Policy.protected_set(config, "analytics"), "ip")
     refute MapSet.member?(Policy.protected_set(config, "primary"), "ip")
   end
+
+  defmodule CountingRepo do
+    def config do
+      Process.put(:schema_scans, (Process.get(:schema_scans) || 0) + 1)
+      [otp_app: :phoenix_lens]
+    end
+  end
+
+  test "schema redact fields are read once per repo" do
+    :persistent_term.erase({Policy, :schema_redact, CountingRepo})
+
+    assert Policy.schema_redact_fields(CountingRepo) ==
+             Policy.schema_redact_fields(CountingRepo)
+
+    assert Process.get(:schema_scans) == 1
+  end
 end

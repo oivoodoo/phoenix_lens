@@ -25,16 +25,7 @@ defmodule PhoenixLens.Integrations do
   end
 
   def ensure_table do
-    case repo() do
-      nil ->
-        :ok
-
-      repo ->
-        repo.query!(table_sql(), [], log: false)
-        :ok
-    end
-  rescue
-    _ -> :ok
+    PhoenixLens.Migrations.ensure_once(repo())
   end
 
   def list(kind \\ nil) do

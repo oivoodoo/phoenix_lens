@@ -7,7 +7,7 @@ Add PhoenixLens to `mix.exs`:
 ```elixir
 def deps do
   [
-    {:phoenix_lens, "~> 0.1.7"}
+    {:phoenix_lens, "~> 0.1.8"}
   ]
 end
 ```
@@ -45,6 +45,21 @@ end
 ```
 
 Then open `/lens`. Screenshots and query-engine details: [Guide.md](Guide.md). MCP server: [MCP.md](MCP.md).
+
+### Upgrade
+
+`up/0` is idempotent. When moving an existing database to this release, add a new migration instead of editing the one that already ran:
+
+```elixir
+defmodule MyApp.Repo.Migrations.UpgradePhoenixLens do
+  use Ecto.Migration
+
+  def up, do: PhoenixLens.Migrations.up()
+  def down, do: :ok
+end
+```
+
+That is the schema step for this release. It creates nothing new if the tables are already current. Missing columns (dashboard card layout, `audit_retention_days`) are added only when `information_schema` says they are absent. Lens does not run `ALTER TABLE` on dashboard page views.
 
 The SQL editor autocompletes tables and columns from Ecto schemas (and `information_schema` when a repo is configured). Type after `FROM` / `JOIN` for tables, `users.` for that table’s columns, or a prefix in `SELECT` / `WHERE`. Tab or Enter inserts. Protected columns are labelled redacted.
 

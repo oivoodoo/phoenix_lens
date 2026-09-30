@@ -12,6 +12,8 @@ defmodule PhoenixLens.Settings do
     duckdb default primary catalog sys
   )
   @engine_key {__MODULE__, :engine}
+  @retention_key {__MODULE__, :audit_retention_days}
+  @sources_key {__MODULE__, :sources}
   @default_retention_days 90
   @retention_choices [7, 30, 90, 180, 365, 0]
 
@@ -21,11 +23,20 @@ defmodule PhoenixLens.Settings do
   def default_retention_days, do: @default_retention_days
 
   def engine do
-    engine = persisted_engine() || app_engine() || :postgresql
-    :persistent_term.put(@engine_key, engine)
-    engine
-  rescue
-    _ -> app_engine() || :persistent_term.get(@engine_key, :postgresql)
+    case :persistent_term.get(@engine_key, :miss) do
+      engine when engine in [:postgresql, :duckdb] ->
+        engine
+
+      _ ->
+        case persisted_engine() do
+          engine when engine in [:postgresql, :duckdb] ->
+            :persistent_term.put(@engine_key, engine)
+            engine
+
+          _ ->
+            app_engine() || :postgresql
+        end
+    end
   end
 
   def duckdb? do
@@ -58,7 +69,8 @@ defmodule PhoenixLens.Settings do
             ON CONFLICT (id) DO UPDATE SET engine = EXCLUDED.engine, updated_at = NOW()
             """,
             [engine],
-            log: false
+            log: false,
+            timeout: 5_000
           )
 
           :persistent_term.put(@engine_key, String.to_existing_atom(engine))
@@ -71,17 +83,20 @@ defmodule PhoenixLens.Settings do
   end
 
   def audit_retention_days do
-    ensure_tables()
-
-    case query_maps("SELECT audit_retention_days FROM phoenix_lens_settings WHERE id = 1") do
-      [%{"audit_retention_days" => days}] when is_integer(days) and days >= 0 ->
+    case :persistent_term.get(@retention_key, :miss) do
+      days when is_integer(days) and days >= 0 ->
         days
 
       _ ->
-        app_retention() || @default_retention_days
+        case fetch_retention() do
+          {:ok, days} ->
+            :persistent_term.put(@retention_key, days)
+            days
+
+          :miss ->
+            app_retention() || @default_retention_days
+        end
     end
-  rescue
-    _ -> app_retention() || @default_retention_days
   end
 
   def put_audit_retention_days(days) do
@@ -110,9 +125,11 @@ defmodule PhoenixLens.Settings do
               SET audit_retention_days = EXCLUDED.audit_retention_days, updated_at = NOW()
             """,
             [days],
-            log: false
+            log: false,
+            timeout: 5_000
           )
 
+          :persistent_term.put(@retention_key, days)
           _ = PhoenixLens.Audit.purge_expired()
           {:ok, days}
         end
@@ -133,15 +150,37 @@ defmodule PhoenixLens.Settings do
   def parse_retention(_), do: nil
 
   def sources do
-    ensure_tables()
+    case :persistent_term.get(@sources_key, :miss) do
+      :miss -> load_sources()
+      sources when is_list(sources) -> sources
+    end
+  end
 
-    query_maps("""
-    SELECT id, alias, kind, dsn, enabled, error, inserted_at, updated_at
-    FROM phoenix_lens_sources
-    ORDER BY id ASC
-    """)
+  defp load_sources do
+    case metadata_repo() do
+      nil ->
+        []
+
+      _repo ->
+        ensure_tables()
+
+        rows =
+          query_maps("""
+          SELECT id, alias, kind, dsn, enabled, error, inserted_at, updated_at
+          FROM phoenix_lens_sources
+          ORDER BY id ASC
+          """)
+
+        :persistent_term.put(@sources_key, rows)
+        rows
+    end
   rescue
     _ -> []
+  end
+
+  defp forget_sources do
+    :persistent_term.erase(@sources_key)
+    :ok
   end
 
   def add_source(attrs) when is_map(attrs) do
@@ -161,9 +200,11 @@ defmodule PhoenixLens.Settings do
             RETURNING id
             """,
             [source.alias, source.kind, source.dsn],
-            log: false
+            log: false,
+            timeout: 5_000
           )
 
+        forget_sources()
         _ = DuckDB.Server.reload()
         {:ok, Enum.find(sources(), &(&1["id"] == id))}
       end
@@ -182,9 +223,11 @@ defmodule PhoenixLens.Settings do
       repo.query!(
         "DELETE FROM phoenix_lens_sources WHERE id = $1",
         [to_int(id)],
-        log: false
+        log: false,
+        timeout: 5_000
       )
 
+      forget_sources()
       _ = DuckDB.Server.reload()
       :ok
     end
@@ -199,8 +242,11 @@ defmodule PhoenixLens.Settings do
       repo.query!(
         "UPDATE phoenix_lens_sources SET error = $2, updated_at = NOW() WHERE id = $1",
         [id, error],
-        log: false
+        log: false,
+        timeout: 5_000
       )
+
+      forget_sources()
     end
 
     :ok
@@ -268,24 +314,7 @@ defmodule PhoenixLens.Settings do
   def redact_dsn(_), do: ""
 
   def ensure_tables do
-    case metadata_repo() do
-      nil ->
-        :ok
-
-      repo ->
-        repo.query!(settings_sql(), [], log: false)
-        repo.query!(settings_alter_sql(), [], log: false)
-        repo.query!(sources_sql(), [], log: false)
-        PhoenixLens.Protection.ensure_table()
-        PhoenixLens.Tokens.ensure_table()
-        PhoenixLens.Integrations.ensure_table()
-        PhoenixLens.Alerts.ensure_table()
-        PhoenixLens.Auth.ensure_tables()
-        PhoenixLens.Dashboards.ensure_layout()
-        :ok
-    end
-  rescue
-    _ -> :ok
+    PhoenixLens.Migrations.ensure_once(metadata_repo())
   end
 
   def settings_sql do
@@ -300,10 +329,9 @@ defmodule PhoenixLens.Settings do
   end
 
   def settings_alter_sql do
-    """
-    ALTER TABLE phoenix_lens_settings
-      ADD COLUMN IF NOT EXISTS audit_retention_days int NOT NULL DEFAULT 90
-    """
+    PhoenixLens.Migrations.add_columns_unless_exists("phoenix_lens_settings", [
+      {"audit_retention_days", "int NOT NULL DEFAULT 90"}
+    ])
   end
 
   def sources_sql do
@@ -322,14 +350,40 @@ defmodule PhoenixLens.Settings do
   end
 
   defp persisted_engine do
-    ensure_tables()
+    case metadata_repo() do
+      nil ->
+        nil
 
-    case query_maps("SELECT engine FROM phoenix_lens_settings WHERE id = 1") do
-      [%{"engine" => engine}] when engine in @engines -> String.to_existing_atom(engine)
-      _ -> nil
+      _repo ->
+        case query_maps("SELECT engine FROM phoenix_lens_settings WHERE id = 1") do
+          [%{"engine" => engine}] when engine in @engines -> String.to_existing_atom(engine)
+          [] -> app_engine() || :postgresql
+          _ -> nil
+        end
     end
   rescue
     _ -> nil
+  end
+
+  defp fetch_retention do
+    case metadata_repo() do
+      nil ->
+        :miss
+
+      _repo ->
+        case query_maps("SELECT audit_retention_days FROM phoenix_lens_settings WHERE id = 1") do
+          [%{"audit_retention_days" => days}] when is_integer(days) and days >= 0 ->
+            {:ok, days}
+
+          [] ->
+            {:ok, app_retention() || @default_retention_days}
+
+          _ ->
+            :miss
+        end
+    end
+  rescue
+    _ -> :miss
   end
 
   defp app_retention do
@@ -362,7 +416,8 @@ defmodule PhoenixLens.Settings do
         []
 
       repo ->
-        %{rows: rows, columns: columns} = repo.query!(sql, params, log: false)
+        %{rows: rows, columns: columns} =
+          repo.query!(sql, params, log: false, timeout: 5_000)
 
         Enum.map(rows, fn row ->
           columns |> Enum.map(&to_string/1) |> Enum.zip(row) |> Map.new()

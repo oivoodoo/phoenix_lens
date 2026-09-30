@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.1.8
+
+- Dashboard loads no longer run schema DDL or an unbounded audit `DELETE` on the request path. Those checkouts were inheriting the host Repo timeout (often 60s) and the pool disconnected the connection.
+- Column adds consult `information_schema` and alter only when the column is missing, so an upgrade does not take `ACCESS EXCLUSIVE` on tables that already have the columns.
+- Audit retention deletes at most 1000 rows per scheduler tick, with `lock_timeout` 2s and `statement_timeout` 4s.
+- Existing installs need a new migration that calls `PhoenixLens.Migrations.up/0` again. See the upgrade snippet in `docs/Phoenix.md`.
+- Cache the query engine, audit retention, DuckDB sources, Ecto redact fields, and the Postgres catalog (`information_schema`, 60 seconds) so a dashboard does not repeat those reads for every card.
+
 ## 0.1.7
 
 - Keep email/phone literals in saved question SQL; mask protected columns in result cells only (audit log still redacts SQL literals).

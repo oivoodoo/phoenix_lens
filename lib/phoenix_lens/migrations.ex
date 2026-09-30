@@ -8,7 +8,24 @@ defmodule PhoenixLens.Migrations do
         def up, do: PhoenixLens.Migrations.up()
         def down, do: PhoenixLens.Migrations.down()
       end
+
+  Upgrading an existing 0.1.x database: add another migration and call `up/0`
+  again. It is idempotent. Missing columns are added only when
+  `information_schema` says they are absent, so a database that already has
+  them does not take `ACCESS EXCLUSIVE`.
+
+      defmodule MyApp.Repo.Migrations.UpgradePhoenixLens do
+        use Ecto.Migration
+
+        def up, do: PhoenixLens.Migrations.up()
+        def down, do: :ok
+      end
   """
+
+  @ready {__MODULE__, :ready}
+  @backoff {__MODULE__, :backoff}
+  @backoff_ms 60_000
+  @ddl_timeout 10_000
 
   def statements do
     [
@@ -77,12 +94,90 @@ defmodule PhoenixLens.Migrations do
     ]
   end
 
-  def ensure_all(repo) when not is_nil(repo) do
-    Enum.each(statements(), fn sql ->
-      repo.query!(sql, [])
-    end)
+  @doc """
+  Creates any missing Lens tables and columns.
 
-    :ok
+  Successful runs are remembered for this node. Request paths should call
+  `ensure_once/1`, which backs off after a failure instead of repeating DDL.
+  """
+  def ensure_all(repo) when not is_nil(repo) do
+    if ready?(repo) do
+      :ok
+    else
+      Enum.each(statements(), fn sql ->
+        repo.query!(sql, [], timeout: @ddl_timeout, log: false)
+      end)
+
+      :persistent_term.put(ready_key(repo), true)
+      :ok
+    end
+  end
+
+  @doc """
+  Runs `ensure_all/1` at most once per node. A failed attempt waits #{@backoff_ms}ms
+  before trying again, so a dashboard request cannot queue DDL on every card.
+  """
+  def ensure_once(nil), do: :ok
+
+  def ensure_once(repo) do
+    cond do
+      ready?(repo) ->
+        :ok
+
+      backing_off?(repo) ->
+        :ok
+
+      true ->
+        try do
+          ensure_all(repo)
+        rescue
+          _ ->
+            :persistent_term.put(backoff_key(repo), System.monotonic_time(:millisecond))
+            :ok
+        end
+    end
+  end
+
+  @doc false
+  def add_columns_unless_exists(table, columns)
+      when is_binary(table) and is_list(columns) do
+    alters =
+      Enum.map_join(columns, "\n", fn {column, definition} ->
+        """
+          IF NOT EXISTS (
+            SELECT 1
+            FROM information_schema.columns
+            WHERE table_schema = current_schema()
+              AND table_name = '#{table}'
+              AND column_name = '#{column}'
+          ) THEN
+            ALTER TABLE #{table} ADD COLUMN #{column} #{definition};
+          END IF;
+        """
+      end)
+
+    """
+    DO $$
+    BEGIN
+    #{alters}
+    END $$
+    """
+  end
+
+  defp ready?(repo), do: :persistent_term.get(ready_key(repo), false) == true
+
+  defp ready_key(repo), do: {@ready, repo}
+
+  defp backoff_key(repo), do: {@backoff, repo}
+
+  defp backing_off?(repo) do
+    case :persistent_term.get(backoff_key(repo), nil) do
+      at when is_integer(at) ->
+        System.monotonic_time(:millisecond) - at < @backoff_ms
+
+      _ ->
+        false
+    end
   end
 
   def up do

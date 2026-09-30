@@ -26,7 +26,13 @@ defmodule PhoenixLens.Alerts.Scheduler do
   defp schedule, do: Process.send_after(self(), :tick, @tick_ms)
 
   defp safe_run do
-    PhoenixLens.Alerts.Runner.run_due()
+    safe(&PhoenixLens.Alerts.Runner.run_due/0)
+    safe(&PhoenixLens.Audit.purge_expired/0)
+  end
+
+  defp safe(fun) do
+    fun.()
+    :ok
   rescue
     _ -> :ok
   catch

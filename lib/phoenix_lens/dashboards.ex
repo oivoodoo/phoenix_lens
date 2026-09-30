@@ -18,26 +18,16 @@ defmodule PhoenixLens.Dashboards do
   def default_h, do: @default_h
 
   def layout_alter_sql do
-    """
-    ALTER TABLE phoenix_lens_dashboard_cards
-      ADD COLUMN IF NOT EXISTS col int NOT NULL DEFAULT 0,
-      ADD COLUMN IF NOT EXISTS row int NOT NULL DEFAULT 0,
-      ADD COLUMN IF NOT EXISTS size_x int NOT NULL DEFAULT 6,
-      ADD COLUMN IF NOT EXISTS size_y int NOT NULL DEFAULT 5
-    """
+    PhoenixLens.Migrations.add_columns_unless_exists("phoenix_lens_dashboard_cards", [
+      {"col", "int NOT NULL DEFAULT 0"},
+      {"row", "int NOT NULL DEFAULT 0"},
+      {"size_x", "int NOT NULL DEFAULT 6"},
+      {"size_y", "int NOT NULL DEFAULT 5"}
+    ])
   end
 
   def ensure_layout do
-    case metadata_repo!() do
-      nil ->
-        :ok
-
-      repo ->
-        repo.query!(layout_alter_sql(), [], log: false)
-        :ok
-    end
-  rescue
-    _ -> :ok
+    PhoenixLens.Migrations.ensure_once(metadata_repo!())
   end
 
   def list do
@@ -90,7 +80,8 @@ defmodule PhoenixLens.Dashboards do
         repo.query!(
           "UPDATE phoenix_lens_dashboards SET name = $2, updated_at = NOW() WHERE id = $1",
           [to_int(id), name],
-          log: false
+          log: false,
+          timeout: 5_000
         )
 
         get(id)
@@ -104,7 +95,8 @@ defmodule PhoenixLens.Dashboards do
             RETURNING id
             """,
             [name],
-            log: false
+            log: false,
+            timeout: 5_000
           )
 
         get(new_id)
@@ -121,7 +113,8 @@ defmodule PhoenixLens.Dashboards do
       repo.query!(
         "SELECT COALESCE(MAX(position), -1) + 1 FROM phoenix_lens_dashboard_cards WHERE dashboard_id = $1",
         [to_int(dashboard_id)],
-        log: false
+        log: false,
+        timeout: 5_000
       )
 
     repo.query!(
@@ -140,7 +133,8 @@ defmodule PhoenixLens.Dashboards do
         slot["size_x"],
         slot["size_y"]
       ],
-      log: false
+      log: false,
+      timeout: 5_000
     )
 
     get(dashboard_id)
@@ -162,7 +156,8 @@ defmodule PhoenixLens.Dashboards do
         WHERE id = $1 AND dashboard_id = $6
         """,
         [id, layout["col"], layout["row"], layout["size_x"], layout["size_y"], dash_id],
-        log: false
+        log: false,
+        timeout: 5_000
       )
     end)
 
@@ -242,7 +237,8 @@ defmodule PhoenixLens.Dashboards do
     metadata_repo!().query!(
       "DELETE FROM phoenix_lens_dashboard_cards WHERE id = $1",
       [to_int(card_id)],
-      log: false
+      log: false,
+      timeout: 5_000
     )
 
     :ok
@@ -252,7 +248,8 @@ defmodule PhoenixLens.Dashboards do
     metadata_repo!().query!(
       "DELETE FROM phoenix_lens_dashboards WHERE id = $1",
       [to_int(id)],
-      log: false
+      log: false,
+      timeout: 5_000
     )
 
     :ok
@@ -333,7 +330,8 @@ defmodule PhoenixLens.Dashboards do
         []
 
       repo ->
-        %{rows: rows, columns: columns} = repo.query!(sql, params, log: false)
+        %{rows: rows, columns: columns} =
+          repo.query!(sql, params, log: false, timeout: 5_000)
 
         Enum.map(rows, fn row ->
           columns |> Enum.map(&to_string/1) |> Enum.zip(row) |> Map.new()
