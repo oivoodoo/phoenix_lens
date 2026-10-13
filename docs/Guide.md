@@ -308,6 +308,22 @@ config :phoenix_lens,
   ]
 ```
 
+A ClickHouse source uses the DuckDB community extension `clickhouse_scanner`. The DSN is a native-protocol URI, and Lens attaches it read-only:
+
+```elixir
+config :phoenix_lens,
+  engine: :duckdb,
+  duckdb_sources: [
+    %{
+      alias: "clickhouse",
+      kind: "clickhouse",
+      dsn: "clickhouse://datafs:secret@clickhouse:9000/datafs"
+    }
+  ]
+```
+
+The database in the path becomes the schema, so `clickhouse.events` is `datafs.events`. Port 9000 stays on the plain native protocol. Port 9440 turns TLS on (`clickhouses://`).
+
 User SQL still cannot `ATTACH`. Timeouts and row caps still apply. Origin-column masking uses the SELECT list (DuckDB has no Postgres `RowDescription` OIDs).
 
 ## Dummy app

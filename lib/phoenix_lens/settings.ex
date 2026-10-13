@@ -6,7 +6,7 @@ defmodule PhoenixLens.Settings do
   alias PhoenixLens.{Config, DuckDB, Error}
 
   @engines ~w(postgresql duckdb)
-  @kinds ~w(postgres mysql sqlite duckdb parquet csv json)
+  @kinds ~w(postgres mysql sqlite duckdb clickhouse parquet csv json)
   @reserved ~w(
     memory repo main postgres information_schema pg_catalog temp system
     duckdb default primary catalog sys

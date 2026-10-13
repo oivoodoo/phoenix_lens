@@ -83,7 +83,7 @@ defmodule PhoenixLens.DuckDB do
     kind = source.kind
     _ = maybe_install(conn, kind, source.dsn)
 
-    case exec(conn, attach_sql(source)) do
+    case exec(conn, attach_statement(source)) do
       :ok -> :ok
       {:error, _} = err -> err
     end
@@ -263,6 +263,9 @@ defmodule PhoenixLens.DuckDB do
     end)
   end
 
+  @doc false
+  def attach_statement(source), do: attach_sql(source)
+
   defp attach_sql(%{kind: kind, alias: alias_, dsn: dsn} = source)
        when kind in ["postgres", "mysql", "sqlite"] do
     mode = if Map.get(source, :read_only, true) == false, do: "", else: ", READ_ONLY"
@@ -271,6 +274,16 @@ defmodule PhoenixLens.DuckDB do
 
   defp attach_sql(%{kind: "duckdb", alias: alias_, dsn: dsn}) do
     "ATTACH #{sql_string(dsn)} AS #{quote_ident(alias_)} (READ_ONLY)"
+  end
+
+  defp attach_sql(%{kind: "clickhouse", alias: alias_, dsn: dsn}) do
+    schema =
+      case clickhouse_database(dsn) do
+        nil -> ""
+        name -> ", SCHEMA #{sql_string(name)}"
+      end
+
+    "ATTACH #{sql_string(dsn)} AS #{quote_ident(alias_)} (TYPE clickhouse, READ_ONLY#{schema})"
   end
 
   defp attach_sql(%{kind: kind, alias: alias_, dsn: dsn})
@@ -283,6 +296,11 @@ defmodule PhoenixLens.DuckDB do
       end
 
     "CREATE OR REPLACE VIEW #{quote_ident(alias_)} AS SELECT * FROM #{reader}(#{sql_string(dsn)})"
+  end
+
+  defp maybe_install(conn, "clickhouse", _dsn) do
+    _ = exec(conn, "INSTALL clickhouse_scanner FROM community")
+    _ = exec(conn, "LOAD clickhouse_scanner")
   end
 
   defp maybe_install(conn, kind, dsn) do
@@ -356,6 +374,15 @@ defmodule PhoenixLens.DuckDB do
   def sql_string(value) do
     "'" <> String.replace(to_string(value), "'", "''") <> "'"
   end
+
+  defp clickhouse_database(dsn) when is_binary(dsn) do
+    case URI.parse(dsn).path do
+      "/" <> name when name != "" -> URI.decode(name)
+      _ -> nil
+    end
+  end
+
+  defp clickhouse_database(_), do: nil
 
   defp typed_dsn("mysql", dsn), do: mysql_dsn(dsn)
   defp typed_dsn(_kind, dsn), do: dsn

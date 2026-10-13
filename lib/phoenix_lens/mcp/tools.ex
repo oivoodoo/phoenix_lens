@@ -410,11 +410,11 @@ defmodule PhoenixLens.MCP.Tools do
       end),
       tool(
         "add_source",
-        "Attach an extra DuckDB source (postgres, mysql, sqlite, duckdb, parquet, csv, json).",
+        "Attach an extra DuckDB source (postgres, mysql, sqlite, duckdb, clickhouse, parquet, csv, json).",
         object(
           %{
             "alias" => string("SQL alias, for example billing"),
-            "kind" => string("postgres, mysql, sqlite, duckdb, parquet, csv, or json"),
+            "kind" => string("postgres, mysql, sqlite, duckdb, clickhouse, parquet, csv, or json"),
             "dsn" => string("Connection string, file path, or URL")
           },
           ["alias", "kind", "dsn"]
